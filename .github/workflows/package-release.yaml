@@ -1,0 +1,24 @@
+name: Package Release
+# Deploy repo: a manual `sol-v*` tag is the sole release trigger.
+# rainix-autopublish's merge-driven, next-version lifecycle is wrong for this
+# shape: it bumps the release version on every merge, while the frozen deploy
+# tag only advances at deploy time.
+#
+# The on-chain deploy is separate and manual, run BEFORE tagging; this never
+# broadcasts. rainix-tag-release's chain verification is the intended gate: a
+# release is declared here only once it is a deployment that already happened.
+#
+# Adopts the push-free release flow from rainlanguage/rainix#338 (PR the
+# snapshot, then tag → publish): the workflow only publishes to Soldeer and
+# creates the GitHub release, and writes nothing back to a protected main.
+on:
+  push:
+    tags:
+      - sol-v*
+jobs:
+  release:
+    uses: rainlanguage/rainix/.github/workflows/rainix-tag-release.yaml@main
+    with:
+      soldeer-package: rain-math-float-deploy
+      snapshot-generate-cmd: forge script ./script/Build.sol && forge fmt
+    secrets: inherit

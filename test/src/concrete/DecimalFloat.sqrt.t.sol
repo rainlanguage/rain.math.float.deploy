@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: LicenseRef-DCL-1.0
+// SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
+pragma solidity =0.8.25;
+
+import {LibDecimalFloat, Float} from "rain-math-float-0.1.7/src/lib/LibDecimalFloat.sol";
+import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
+import {LogTest} from "test/abstract/LogTest.sol";
+import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
+
+contract DecimalFloatSqrtTest is LogTest {
+    using LibDecimalFloat for Float;
+
+    function sqrtExternal(Float a) external view returns (Float) {
+        return a.sqrt(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    }
+
+    function testSqrtDeployed(Float a) external {
+        DecimalFloat deployed = new DecimalFloat();
+
+        try this.sqrtExternal(a) returns (Float c) {
+            Float deployedC = deployed.sqrt(a);
+
+            assertEq(Float.unwrap(c), Float.unwrap(deployedC));
+        } catch (bytes memory err) {
+            vm.expectRevert(err);
+            deployed.sqrt(a);
+        }
+    }
+}

@@ -1,0 +1,12 @@
+out
+cache
+result
+.env
+dependencies
+remappings.txt
+.pre-commit-config.yaml
+target
+dist
+temp
+node_modules
+.direnv

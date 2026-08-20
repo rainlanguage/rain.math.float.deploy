@@ -1,0 +1,22 @@
+name: Crate + npm Release
+# The Rust bindings (`rain-math-float` crate) and their wasm/npm wrapper
+# (`@rainlanguage/float`) publish on merge to main via rainix-autopublish's
+# next-version lifecycle — the same flow the library used before the split.
+#
+# This is DELIBERATELY separate from `package-release.yaml`: the Soldeer
+# `rain-math-float-deploy` package is a frozen deploy artifact that only
+# advances at deploy time (manual `sol-v*` tag, chain-verified), whereas the
+# crate/npm are ordinary bindings whose version tracks binding-code changes and
+# is safe to bump on merge. So autopublish handles crate + npm here and NO
+# `soldeer-package` is passed — the deploy package is released by the tag flow.
+on:
+  push:
+    branches:
+      - main
+jobs:
+  release:
+    uses: rainlanguage/rainix/.github/workflows/rainix-autopublish.yaml@main
+    with:
+      crate: rain-math-float
+      npm-package: "@rainlanguage/float"
+    secrets: inherit

@@ -1,0 +1,22 @@
+name: Manual sol artifacts
+# The on-chain deploy, human-dispatched, run BEFORE tagging a release. Two
+# suites, matching `script/Deploy.sol`'s DEPLOYMENT_SUITE switch: deploy the
+# log-tables data contract once per chain, then the DecimalFloat concrete (its
+# constructor reads the log tables at the Zoltu address). Never broadcasts on
+# merge.
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "The suite to deploy"
+        required: true
+        type: choice
+        options:
+          - log-tables
+          - decimal-float
+jobs:
+  deploy:
+    uses: rainlanguage/rainix/.github/workflows/rainix-manual-sol-artifacts.yaml@main
+    with:
+      suite: ${{ inputs.suite }}
+    secrets: inherit

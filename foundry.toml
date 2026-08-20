@@ -1,0 +1,103 @@
+# Release metadata, not foundry config: `rainix-tag-release` rewrites `version`
+# from the tag it is triggered by. `[external.*]` is the section foundry
+# reserves for another tool's config: it never merges it into a profile and
+# never warns about it.
+[external.package]
+name = "rain-math-float-deploy"
+# Deploy repo: this is the version of the LAST Soldeer publish, not a
+# next-version slot. A normal PR does not bump it; only a release moves it.
+# Nothing is published yet, so the first release sets this to the version its
+# `sol-v*` tag names.
+version = "0.1.0"
+
+[profile.default]
+src = 'src'
+test = 'test'
+out = 'out'
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config
+
+solc = "0.8.25"
+optimizer = true
+
+# CRITICAL: 1_000_000, NOT the 100_000 that rain.factory.deploy /
+# rain.extrospection.deploy use. `DecimalFloat`'s deterministic Zoltu address
+# (ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS = 0x799632d2…) and codehash
+# (DECIMAL_FLOAT_CONTRACT_HASH = 0xdc4688…) are a pure function of its creation
+# bytecode, which is a pure function of these settings AND the library sources
+# it compiles against (the `rain-math-float` package). These match the exact
+# settings the live deployment was produced with in the pre-split hybrid
+# `rain.math.float` repo; changing the run count moves the address and breaks
+# every pin in `src/lib/deploy/LibDecimalFloatDeploy.sol`.
+optimizer_runs = 1000000
+
+evm_version = "cancun"
+
+bytecode_hash = "none"
+cbor_metadata = false
+
+# `LibDecimalFloatDeployTaggedConstantsTest` runs
+# `script/check-published-deploy-constants.sh` via `vm.ffi`.
+ffi = true
+
+libs = ["dependencies"]
+
+# `script/Build.sol` regenerates `src/generated/LogTables.pointers.sol`
+# under `src/`. The generated log-table bytes are a pure function of
+# `LibLogTable` (mathematical tables), version-invariant, so this file is a
+# single snapshot rather than a per-tag directory.
+#
+# `script/CopyArtifacts.sol` reads the freshly built forge artifacts under
+# `./out` and writes the committed ABI copies the Rust crate compiles against
+# into `./crates/float/abi`; `test/script/CopyArtifacts.t.sol` reads them back.
+fs_permissions = [
+  { access = "read-write", path = "./src/generated" },
+  { access = "read", path = "./out" },
+  { access = "read-write", path = "./crates/float/abi" },
+]
+
+[fuzz]
+runs = 2048
+
+# `recursive_deps` is off, so every package an import resolves through is
+# declared here, including the ones reached only transitively through
+# `rain-math-float` (the concrete compiles `LibFormatDecimalFloat` →
+# `@openzeppelin-contracts` Strings, `LibParseDecimalFloat` → `rain-string` →
+# `rain-solmem`).
+[dependencies]
+forge-std = "1.16.2"
+"@openzeppelin-contracts" = "5.6.1"
+"rain-solmem" = "0.1.3"
+"rain-string" = "0.2.0"
+"rain-datacontract" = "0.1.0"
+"rain-deploy" = "0.1.7"
+"rain-sol-codegen" = "0.1.36"
+# The library half. Provides LibDecimalFloat, LibDecimalFloatImplementation,
+# LibFormatDecimalFloat, LibParseDecimalFloat, LibLogTable and the errors that
+# the concrete + deploy lib + tests here import. Pinned at the current published
+# library; bump to the first post-strip `rain-math-float` release once it
+# publishes (a `soldeer update`, which rewrites the versioned import prefixes).
+"rain-math-float" = "0.1.7"
+
+[soldeer]
+recursive_deps = false
+
+# One alias per network `LibDecimalFloatDeployProdTest` forks and
+# `script/Deploy.sol` broadcasts to.
+[rpc_endpoints]
+arbitrum = "${ARBITRUM_RPC_URL}"
+base = "${BASE_RPC_URL}"
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+flare = "${FLARE_RPC_URL}"
+polygon = "${POLYGON_RPC_URL}"
+
+# `rainix-manual-sol-artifacts` passes `--verify` by default and exports exactly
+# these variable names, so a deploy without this section broadcasts and then
+# fails with no API key configured for the chain. One entry per
+# `[rpc_endpoints]` alias, because the deploy goes to all of them.
+[etherscan]
+arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}" }
+base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}" }
+base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}" }
+flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}" }
+polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}" }
