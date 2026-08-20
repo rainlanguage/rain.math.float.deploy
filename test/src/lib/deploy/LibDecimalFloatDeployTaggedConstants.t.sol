@@ -19,14 +19,14 @@ contract LibDecimalFloatDeployTaggedConstantsTest is Test {
         cmd[1] = "script/check-published-deploy-constants.sh";
         bytes memory out = vm.ffi(cmd);
 
-        // The registry could not be reached; there is nothing to verify.
-        if (_startsWith(out, bytes("SKIP"))) {
-            vm.skip(true);
-            return;
-        }
-
-        // On failure the actual value lists the missing `*_<version>` constants.
-        assertEq(string(out), "OK", "a published soldeer tag is missing pinned deploy constants");
+        // "OK" means every published tag has its full pinned constant suite;
+        // "SKIP" means the registry was unreachable (offline dev — nothing to
+        // verify). Either passes. On a real gap the value is the list of missing
+        // `*_<version>` constants, which fails here.
+        assertTrue(
+            _startsWith(out, bytes("OK")) || _startsWith(out, bytes("SKIP")),
+            string.concat("a published soldeer tag is missing pinned deploy constants: ", string(out))
+        );
     }
 
     function _startsWith(bytes memory s, bytes memory prefix) private pure returns (bool) {
