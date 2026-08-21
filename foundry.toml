@@ -106,9 +106,11 @@ polygon = "${POLYGON_RPC_URL}"
 # fails with no API key configured for the chain. One entry per
 # `[rpc_endpoints]` alias, because the deploy goes to all of them.
 #
-# "chain" is stated on the entries whose alias foundry does not itself resolve
-# to a chain, as foundry raises a config error for an unknown alias with
-# neither "chain" nor "url".
+# "chain" is stated on ethereum and hyperevm because foundry does not know
+# those alias strings as chain names — its own names for them are "mainnet"
+# and "hyperliquid" — so without it the entry cannot be matched to the chain
+# being verified against. The other five aliases foundry resolves itself.
+# `forge config` prints the resolved chain per entry.
 [etherscan]
 arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}" }
 base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}" }
