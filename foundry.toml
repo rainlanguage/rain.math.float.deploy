@@ -6,8 +6,6 @@
 name = "rain-math-float-deploy"
 # Deploy repo: this is the version of the LAST Soldeer publish, not a
 # next-version slot. A normal PR does not bump it; only a release moves it.
-# Nothing is published yet, so the first release sets this to the version its
-# `sol-v*` tag names.
 version = "0.1.0"
 
 [profile.default]
@@ -82,22 +80,35 @@ forge-std = "1.16.2"
 [soldeer]
 recursive_deps = false
 
-# One alias per network `LibDecimalFloatDeployProdTest` forks and
-# `script/Deploy.sol` broadcasts to.
+# One alias per network `script/Deploy.sol` broadcasts to, which is
+# `LibRainDeploy.supportedNetworks()` — all seven. A network the script
+# selects but this section does not name is not a skip: `vm.createSelectFork`
+# reverts with "invalid rpc url: <alias>" and takes the whole deploy down,
+# after it has already broadcast to the networks ahead of it in the list.
 [rpc_endpoints]
 arbitrum = "${ARBITRUM_RPC_URL}"
 base = "${BASE_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+ethereum = "${ETHEREUM_RPC_URL}"
 flare = "${FLARE_RPC_URL}"
+hyperevm = "${HYPEREVM_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
 
 # `rainix-manual-sol-artifacts` passes `--verify` by default and exports exactly
 # these variable names, so a deploy without this section broadcasts and then
 # fails with no API key configured for the chain. One entry per
 # `[rpc_endpoints]` alias, because the deploy goes to all of them.
+#
+# "chain" is stated on ethereum and hyperevm because foundry does not know
+# those alias strings as chain names — its own names for them are "mainnet"
+# and "hyperliquid" — so without it the entry cannot be matched to the chain
+# being verified against. The other five aliases foundry resolves itself.
+# `forge config` prints the resolved chain per entry.
 [etherscan]
 arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}" }
 base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}" }
 base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}" }
+ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
 flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}" }
+hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}" }
