@@ -6,8 +6,6 @@
 name = "rain-math-float-deploy"
 # Deploy repo: this is the version of the LAST Soldeer publish, not a
 # next-version slot. A normal PR does not bump it; only a release moves it.
-# Nothing is published yet, so the first release sets this to the version its
-# `sol-v*` tag names.
 version = "0.1.0"
 
 [profile.default]
@@ -87,11 +85,6 @@ recursive_deps = false
 # selects but this section does not name is not a skip: `vm.createSelectFork`
 # reverts with "invalid rpc url: <alias>" and takes the whole deploy down,
 # after it has already broadcast to the networks ahead of it in the list.
-#
-# `LibDecimalFloatDeployProdTest` forks the five of these that the log tables
-# are already deployed on; ethereum and hyperevm are reachable here but have no
-# log tables yet, so the `log-tables` suite has to run there before
-# `decimal-float` can.
 [rpc_endpoints]
 arbitrum = "${ARBITRUM_RPC_URL}"
 base = "${BASE_RPC_URL}"
