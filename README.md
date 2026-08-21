@@ -42,8 +42,10 @@ Releases are manual `sol-v*` tags, never merges. `package-release.yaml` runs
 `rainix-tag-release`, which regenerates the pointers snapshot, verifies the live
 chains against the pins and publishes `rain-math-float-deploy` to Soldeer. The
 on-chain deploy is separate and human-dispatched, run BEFORE tagging: the
-`Manual sol artifacts` workflow runs `script/Deploy.sol`. The addresses already
-exist on-chain (deterministic Zoltu), so the first release attests existing pins
-rather than deploying fresh.
+`Manual sol artifacts` workflow runs `script/Deploy.sol`. The pinned addresses
+are deterministic (Zoltu), so they are fixed before any broadcast and do not
+move between releases — but a pin records what the bytecode deploys to, not that
+it has been deployed. `LibDecimalFloatDeployProdTest` is what asserts a given
+chain actually carries the code.
 
 See rainlanguage/rain.factory#46 for the library/deploy split rationale.
