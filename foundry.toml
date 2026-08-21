@@ -82,22 +82,38 @@ forge-std = "1.16.2"
 [soldeer]
 recursive_deps = false
 
-# One alias per network `LibDecimalFloatDeployProdTest` forks and
-# `script/Deploy.sol` broadcasts to.
+# One alias per network `script/Deploy.sol` broadcasts to, which is
+# `LibRainDeploy.supportedNetworks()` — all seven. A network the script
+# selects but this section does not name is not a skip: `vm.createSelectFork`
+# reverts with "invalid rpc url: <alias>" and takes the whole deploy down,
+# after it has already broadcast to the networks ahead of it in the list.
+#
+# `LibDecimalFloatDeployProdTest` forks the five of these that the log tables
+# are already deployed on; ethereum and hyperevm are reachable here but have no
+# log tables yet, so the `log-tables` suite has to run there before
+# `decimal-float` can.
 [rpc_endpoints]
 arbitrum = "${ARBITRUM_RPC_URL}"
 base = "${BASE_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+ethereum = "${ETHEREUM_RPC_URL}"
 flare = "${FLARE_RPC_URL}"
+hyperevm = "${HYPEREVM_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
 
 # `rainix-manual-sol-artifacts` passes `--verify` by default and exports exactly
 # these variable names, so a deploy without this section broadcasts and then
 # fails with no API key configured for the chain. One entry per
 # `[rpc_endpoints]` alias, because the deploy goes to all of them.
+#
+# "chain" is stated on the entries whose alias foundry does not itself resolve
+# to a chain, as foundry raises a config error for an unknown alias with
+# neither "chain" nor "url".
 [etherscan]
 arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}" }
 base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}" }
 base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}" }
+ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
 flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}" }
+hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}" }
