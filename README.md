@@ -32,8 +32,7 @@ consumers that need the deployed address, codehash or the deploy pins
   the generated constants), plus the hand-written `combinedTables()` and
   `checkLogTablesDeployed()`.
 - `src/lib/LibReleasedSuites.sol` (+ the per-contract `Lib*Released.sol`) — the
-  generated record of every released suite, currently empty because nothing is
-  released yet. NEVER edit by hand.
+  generated record of every released suite. NEVER edit by hand.
 - `src/generated/LogTables.pointers.sol` — the AOT-compiled log/anti-log table
   bytes, regenerated (not hand-written) by `script/Build.sol`. The bytes are a
   pure function of `LibLogTable`, so this snapshot is version-invariant. NEVER
