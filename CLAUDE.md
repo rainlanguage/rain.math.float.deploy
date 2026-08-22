@@ -29,11 +29,11 @@ generated deploy records and the deploy scripts + tests. The pure math
 - `src/generated/candidate/` is the rolling record, rewritten by
   `script/Build.sol` and currency-checked by CI;
   `src/lib/deploy/LibDecimalFloatDeploy.sol` aliases it and adds hand-written
-  helpers. `src/generated/<tag>/` snapshots are frozen: a release only ADDS one
-  (none exist yet — nothing is published). Never hand-edit generated files
-  (`src/generated/`, `src/lib/Lib*Released*.sol`).
-- `[external.package].version` names the FIRST `sol-v*` tag until one exists; a
-  normal PR never bumps it.
+  helpers. `src/generated/<tag>/` snapshots are frozen: a release only ADDS one.
+  Never hand-edit generated files (`src/generated/`,
+  `src/lib/Lib*Released*.sol`).
+- `[external.package].version` moves only in a release cut, in lockstep with the
+  frozen `src/generated/<tag>/` snapshot; a normal PR never bumps it.
 - `DecimalFloat`'s constructor reverts unless the log tables are at their Zoltu
   address: tables deploy/build/broadcast FIRST, always.
 - `src/generated/LogTables.pointers.sol` is table BYTES (a pure function of

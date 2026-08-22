@@ -5,10 +5,8 @@
 [external.package]
 name = "rain-math-float-deploy"
 # Deploy repo: a normal PR does not bump this; only a release moves it, in
-# lockstep with the frozen `src/generated/<tag>/` snapshot it names. Nothing
-# is published yet, so this names the version the FIRST `sol-v*` tag will
-# cut, and `src/generated/` holds no frozen tag directory until it does.
-version = "0.1.0"
+# lockstep with the frozen `src/generated/<tag>/` snapshot it names.
+version = "0.1.1"
 
 [profile.default]
 src = 'src'

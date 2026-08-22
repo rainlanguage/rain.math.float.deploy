@@ -26,8 +26,7 @@ consumers that need the deployed address, codehash or the deploy pins
 - `src/generated/candidate/{LogTables,DecimalFloat}.sol` — the rolling deploy
   records (address, codehash, creation and runtime bytecode), rewritten from
   what source compiles to by `script/Build.sol` and currency-checked by CI. A
-  release cut freezes them into `src/generated/<tag>/` (none exist yet — nothing
-  is published). NEVER edit by hand.
+  release cut freezes them into `src/generated/<tag>/`. NEVER edit by hand.
 - `src/lib/deploy/LibDecimalFloatDeploy.sol` — the stable import path over the
   candidate pins (the `ZOLTU_DEPLOYED_*` addresses + codehashes are aliases of
   the generated constants), plus the hand-written `combinedTables()` and
@@ -52,8 +51,7 @@ consumers that need the deployed address, codehash or the deploy pins
 
 ## Releases
 
-Releases are manual `sol-v*` tags, never merges. Nothing is published yet:
-`src/generated/` holds no frozen tag directory until the first tag cuts one.
+Releases are manual `sol-v*` tags, never merges.
 
 The on-chain deploy comes first and is human-dispatched: the
 `Manual sol artifacts` workflow runs `script/Deploy.sol` for the `log-tables`
