@@ -4,8 +4,10 @@
 # never warns about it.
 [external.package]
 name = "rain-math-float-deploy"
-# Deploy repo: this is the version of the LAST Soldeer publish, not a
-# next-version slot. A normal PR does not bump it; only a release moves it.
+# Deploy repo: a normal PR does not bump this; only a release moves it, in
+# lockstep with the frozen `src/generated/<tag>/` snapshot it names. Nothing
+# is published yet, so this names the version the FIRST `sol-v*` tag will
+# cut, and `src/generated/` holds no frozen tag directory until it does.
 version = "0.1.0"
 
 [profile.default]
@@ -25,8 +27,9 @@ optimizer = true
 # bytecode, which is a pure function of these settings AND the library sources
 # it compiles against (the `rain-math-float` package). These match the exact
 # settings the live deployment was produced with in the pre-split hybrid
-# `rain.math.float` repo; changing the run count moves the address and breaks
-# every pin in `src/lib/deploy/LibDecimalFloatDeploy.sol`.
+# `rain.math.float` repo; changing the run count regenerates the
+# `src/generated/candidate/` pins at a different address, off the live
+# deployment that `src/lib/deploy/LibDecimalFloatDeploy.sol` aliases them as.
 optimizer_runs = 1000000
 
 evm_version = "cancun"
@@ -34,22 +37,26 @@ evm_version = "cancun"
 bytecode_hash = "none"
 cbor_metadata = false
 
-# `LibDecimalFloatDeployTaggedConstantsTest` runs
-# `script/check-published-deploy-constants.sh` via `vm.ffi`.
+# `script/lib/LibCopyArtifacts.sol` extracts each committed ABI from the forge
+# artifact via `jq` over `vm.ffi`.
 ffi = true
 
 libs = ["dependencies"]
 
-# `script/Build.sol` regenerates `src/generated/LogTables.pointers.sol`
-# under `src/`. The generated log-table bytes are a pure function of
-# `LibLogTable` (mathematical tables), version-invariant, so this file is a
-# single snapshot rather than a per-tag directory.
+# `script/Build.sol` writes the generated `src/generated/candidate/` snapshots
+# and the generated released-suites libs under `src/`, plus
+# `src/generated/LogTables.pointers.sol` (log-table bytes, a pure function of
+# `LibLogTable`, so a single rolling file rather than a per-tag directory), and
+# reads the release version from this file when `cutRelease()` runs.
+# `DecimalFloatDeploySnapshotTest`'s inherited frozen-record walk reads
+# `src/generated/` too, so tests need the same read access.
 #
 # `script/CopyArtifacts.sol` reads the freshly built forge artifacts under
 # `./out` and writes the committed ABI copies the Rust crate compiles against
 # into `./crates/float/abi`; `test/script/CopyArtifacts.t.sol` reads them back.
 fs_permissions = [
-  { access = "read-write", path = "./src/generated" },
+  { access = "read", path = "./foundry.toml" },
+  { access = "read-write", path = "./src" },
   { access = "read", path = "./out" },
   { access = "read-write", path = "./crates/float/abi" },
 ]

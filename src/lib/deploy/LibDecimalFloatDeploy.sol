@@ -9,44 +9,48 @@ import {
     ANTI_LOG_TABLES,
     ANTI_LOG_TABLES_SMALL
 } from "../../generated/LogTables.pointers.sol";
+import {
+    DEPLOYED_ADDRESS as LOG_TABLES_CANDIDATE_ADDRESS,
+    BYTECODE_HASH as LOG_TABLES_CANDIDATE_HASH
+} from "../../generated/candidate/LogTables.sol";
+import {
+    DEPLOYED_ADDRESS as DECIMAL_FLOAT_CANDIDATE_ADDRESS,
+    BYTECODE_HASH as DECIMAL_FLOAT_CANDIDATE_HASH
+} from "../../generated/candidate/DecimalFloat.sol";
 import {LOG_TABLE_DISAMBIGUATOR} from "rain-math-float-0.1.7/src/lib/table/LibLogTable.sol";
 import {LogTablesNotDeployed} from "rain-math-float-0.1.7/src/error/ErrDecimalFloat.sol";
 
+/// @title LibDecimalFloatDeploy
+/// @notice The consumer-facing deploy surface of this package: the Zoltu
+/// addresses and code hashes of the log tables and of `DecimalFloat`, plus the
+/// two helpers that read them.
+///
+/// The four pins are ALIASES of the rolling snapshots under
+/// `src/generated/candidate/`, which `script/Build.sol` writes by running each
+/// creation code through the Zoltu factory. The snapshot is the single source
+/// of truth and this file is the stable import path over it, so a consumer's
+/// import never moves and nothing here can drift from what the repo compiles.
+/// A frozen release is NOT aliased here — released pins live in their own
+/// `src/generated/<tag>/` snapshot and reach `releasedSuites()` through the
+/// generated `LibReleasedSuites`, so the names below always mean "current".
 library LibDecimalFloatDeploy {
     /// @dev Address of the log tables deployed via Zoltu's deterministic
     /// deployment proxy. This address is the same across all EVM-compatible
     /// networks.
-    address constant ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS = address(0xc51a14251b0dcF0ae24A96b7153991378938f5F5);
+    address constant ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS = LOG_TABLES_CANDIDATE_ADDRESS;
 
     /// @dev The expected codehash of the log tables deployed via Zoltu's
     /// deterministic deployment proxy.
-    bytes32 constant LOG_TABLES_DATA_CONTRACT_HASH = 0x2573004ac3a9ee7fc8d73654d76386f1b6b99e34cdf86a689c4691e47143420f;
+    bytes32 constant LOG_TABLES_DATA_CONTRACT_HASH = LOG_TABLES_CANDIDATE_HASH;
 
     /// @dev Address of the DecimalFloat contract deployed via Zoltu's
     /// deterministic deployment proxy.
     /// This address is the same across all EVM-compatible networks.
-    address constant ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS = address(0x799632d282178e770C7465cad54aDA1021A913D6);
+    address constant ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS = DECIMAL_FLOAT_CANDIDATE_ADDRESS;
 
     /// @dev The expected codehash of the DecimalFloat contract deployed via
     /// Zoltu's deterministic deployment proxy.
-    bytes32 constant DECIMAL_FLOAT_CONTRACT_HASH = 0xdc468883c345d41c0abd98ef2fd933c370bd1682522d37e6f6b729793301f55e;
-
-    /// @dev Deploy constants pinned to each version published to the soldeer
-    /// registry for `rain-math-float-deploy`. These are frozen literals — not
-    /// aliases of the "current" constants above — so each keeps referencing its
-    /// own release's deployment after the current constants advance to a newer
-    /// version. `script/check-published-deploy-constants.sh` (run by
-    /// `LibDecimalFloatDeployTaggedConstantsTest`) queries the registry and
-    /// fails if any published version is missing its suite, so publishing a new
-    /// tag forces pinning that tag's deploy constants here.
-    ///
-    /// This package starts a fresh version lineage on the library/deploy split.
-    /// The `_0_1_1` suffixed constants that lived here referenced the old hybrid
-    /// `rain-math-float` package's 0.1.1 DecimalFloat deployment
-    /// (0xBee0…CC926) and do NOT correspond to any `rain-math-float-deploy`
-    /// release, so they are dropped. The first `rain-math-float-deploy` release
-    /// pins a `_0_1_0` suite equal to the current constants above (the live
-    /// on-chain DecimalFloat at 0x7996…13D6).
+    bytes32 constant DECIMAL_FLOAT_CONTRACT_HASH = DECIMAL_FLOAT_CANDIDATE_HASH;
 
     /// Combines all log and anti-log tables into a single bytes array for
     /// deployment. These are using packed encoding to minimize size and remove
