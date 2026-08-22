@@ -3,7 +3,7 @@
 pragma solidity ^0.8.25;
 
 import {Vm} from "forge-std-1.16.2/src/Vm.sol";
-import {LibDataContract} from "rain-datacontract-0.1.0/src/lib/LibDataContract.sol";
+import {LibDataContract} from "rain-datacontract-0.1.3/src/lib/LibDataContract.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
 
 /// @notice Shared logic for planting the log-tables data contract at its
