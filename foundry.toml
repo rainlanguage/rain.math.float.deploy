@@ -43,20 +43,23 @@ ffi = true
 
 libs = ["dependencies"]
 
-# `script/Build.sol` writes the generated `src/generated/candidate/` snapshots
-# and the generated released-suites libs under `src/`, plus
-# `src/generated/LogTables.pointers.sol` (log-table bytes, a pure function of
-# `LibLogTable`, so a single rolling file rather than a per-tag directory), and
-# reads the release version from this file when `cutRelease()` runs.
+# Write access is scoped to exactly the files `script/Build.sol` generates:
+# everything under `src/generated/` (the candidate snapshots, the frozen tag
+# dirs `cutRelease()` adds, `LogTables.pointers.sol`) and the three generated
+# released-suites libs in `src/lib/` — never hand-written source. It reads the
+# release version from this file when `cutRelease()` runs, and
 # `DecimalFloatDeploySnapshotTest`'s inherited frozen-record walk reads
-# `src/generated/` too, so tests need the same read access.
+# `src/generated/` too.
 #
 # `script/CopyArtifacts.sol` reads the freshly built forge artifacts under
 # `./out` and writes the committed ABI copies the Rust crate compiles against
 # into `./crates/float/abi`; `test/script/CopyArtifacts.t.sol` reads them back.
 fs_permissions = [
   { access = "read", path = "./foundry.toml" },
-  { access = "read-write", path = "./src" },
+  { access = "read-write", path = "./src/generated" },
+  { access = "read-write", path = "./src/lib/LibLogTablesReleased.sol" },
+  { access = "read-write", path = "./src/lib/LibDecimalFloatReleased.sol" },
+  { access = "read-write", path = "./src/lib/LibReleasedSuites.sol" },
   { access = "read", path = "./out" },
   { access = "read-write", path = "./crates/float/abi" },
 ]
