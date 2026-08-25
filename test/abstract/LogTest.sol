@@ -5,13 +5,11 @@ pragma solidity =0.8.25;
 // Re-export console2 here for convenience.
 // forge-lint: disable-next-line(unused-import)
 import {Test, console2} from "forge-std-1.16.2/src/Test.sol";
-import {DataContractMemoryContainer, LibDataContract} from "rain-datacontract-0.1.0/src/lib/LibDataContract.sol";
+import {LibDataContract} from "rain-datacontract-0.1.3/src/lib/LibDataContract.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
 import {LibEtchLogTables} from "script/lib/LibEtchLogTables.sol";
 
 abstract contract LogTest is Test {
-    using LibDataContract for DataContractMemoryContainer;
-
     address sTables;
 
     /// Etch the log tables runtime at the Zoltu-deterministic deployment

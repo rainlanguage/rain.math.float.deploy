@@ -6,7 +6,7 @@ import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {LibRainDeploy} from "rain-deploy-0.1.7/src/lib/LibRainDeploy.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
-import {LibDataContract} from "rain-datacontract-0.1.0/src/lib/LibDataContract.sol";
+import {LibDataContract} from "rain-datacontract-0.1.3/src/lib/LibDataContract.sol";
 
 contract LibDecimalFloatDeployTest is Test {
     /// `LibRainDeploy.etchZoltuFactory` puts the factory bytecode at the
