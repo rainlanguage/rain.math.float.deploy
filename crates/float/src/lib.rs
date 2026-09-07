@@ -6,32 +6,33 @@ use serde::{Deserialize, Serialize};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use wasm_bindgen_utils::prelude::*;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-harness"))]
 use alloy::primitives::aliases::I224;
 
 pub mod error;
 mod evm;
 mod fuzz_ops;
 pub mod js_api;
+#[cfg(any(test, feature = "test-harness"))]
 pub mod tables;
 
 use error::DecimalFloatErrorSelector;
 pub use error::FloatError;
 use evm::execute_call;
-#[cfg(test)]
+#[cfg(any(test, feature = "test-harness"))]
 use evm::execute_test_call;
 
 sol!(
     #![sol(all_derives)]
     DecimalFloat,
-    concat!(env!("CARGO_MANIFEST_DIR"), "/abi/DecimalFloat.json")
+    "abi/DecimalFloat.json"
 );
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-harness"))]
 sol!(
     #![sol(all_derives)]
     TestDecimalFloat,
-    concat!(env!("CARGO_MANIFEST_DIR"), "/abi/TestDecimalFloat.json")
+    "abi/TestDecimalFloat.json"
 );
 
 #[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, Hash)]
@@ -224,7 +225,7 @@ impl Float {
     ///
     /// anyhow::Ok(())
     /// ```
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-harness"))]
     pub fn pack_lossless(coefficient: I224, exponent: i32) -> Result<Self, FloatError> {
         let calldata = TestDecimalFloat::packLosslessCall {
             coefficient,
@@ -238,8 +239,8 @@ impl Float {
         })
     }
 
-    #[cfg(test)]
-    fn unpack(self) -> Result<(alloy::primitives::I256, alloy::primitives::I256), FloatError> {
+    #[cfg(any(test, feature = "test-harness"))]
+    pub fn unpack(self) -> Result<(alloy::primitives::I256, alloy::primitives::I256), FloatError> {
         let Float(float) = self;
         let calldata = TestDecimalFloat::unpackCall { float }.abi_encode();
 
@@ -253,8 +254,8 @@ impl Float {
         })
     }
 
-    #[cfg(test)]
-    fn show_unpacked(self) -> Result<String, FloatError> {
+    #[cfg(any(test, feature = "test-harness"))]
+    pub fn show_unpacked(self) -> Result<String, FloatError> {
         let (coefficient, exponent) = self.unpack()?;
         Ok(format!("{coefficient}e{exponent}"))
     }

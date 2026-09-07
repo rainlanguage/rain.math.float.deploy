@@ -3,25 +3,43 @@
 pragma solidity =0.8.25;
 
 import {LibDecimalFloat, Float} from "rain-math-float-0.1.7/src/lib/LibDecimalFloat.sol";
+import {LibLogTable, ALT_TABLE_FLAG} from "rain-math-float-0.1.7/src/lib/table/LibLogTable.sol";
 
-/// Additional exposed functions for testing the internals of floats
-/// from downstream environments, e.g. rust.
+/// Exposes the library internals the Rust bindings' tests need beside the
+/// `DecimalFloat` ABI: packing, and the log tables as `LibLogTable` ships
+/// them.
 contract TestDecimalFloat {
     using LibDecimalFloat for Float;
 
-    /// Exposes `LibDecimalFloat.packLossless` for offchain use.
-    /// @param coefficient The coefficient to pack.
-    /// @param exponent The exponent to pack.
-    /// @return The packed float.
     function packLossless(int224 coefficient, int32 exponent) external pure returns (Float) {
         return LibDecimalFloat.packLossless(coefficient, exponent);
     }
 
-    /// Exposes `LibDecimalFloat.unpack` for offchain use.
-    /// @param float The float to unpack.
-    /// @return coefficient The coefficient of the float.
-    /// @return exponent The exponent of the float.
     function unpack(Float float) external pure returns (int256, int256) {
         return LibDecimalFloat.unpack(float);
+    }
+
+    function altTableFlag() external pure returns (uint16) {
+        return ALT_TABLE_FLAG;
+    }
+
+    function logTableDec() external pure returns (uint16[10][90] memory) {
+        return LibLogTable.logTableDec();
+    }
+
+    function logTableDecSmall() external pure returns (uint8[10][90] memory) {
+        return LibLogTable.logTableDecSmall();
+    }
+
+    function logTableDecSmallAlt() external pure returns (uint8[10][10] memory) {
+        return LibLogTable.logTableDecSmallAlt();
+    }
+
+    function antiLogTableDec() external pure returns (uint16[10][100] memory) {
+        return LibLogTable.antiLogTableDec();
+    }
+
+    function antiLogTableDecSmall() external pure returns (uint8[10][100] memory) {
+        return LibLogTable.antiLogTableDecSmall();
     }
 }
