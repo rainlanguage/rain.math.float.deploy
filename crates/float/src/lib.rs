@@ -9,6 +9,7 @@ use wasm_bindgen_utils::prelude::*;
 #[cfg(test)]
 use alloy::primitives::aliases::I224;
 
+mod constants;
 pub mod error;
 mod evm;
 mod fuzz_ops;
