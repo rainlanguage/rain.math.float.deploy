@@ -9,6 +9,7 @@ use wasm_bindgen_utils::prelude::*;
 #[cfg(test)]
 use alloy::primitives::aliases::I224;
 
+mod constants;
 pub mod error;
 mod evm;
 mod fuzz_ops;
@@ -496,6 +497,22 @@ impl Float {
 
         execute_call(Bytes::from(calldata), |output| {
             let decoded = DecimalFloat::zeroCall::abi_decode_returns(output.as_ref())?;
+            Ok(Float(decoded))
+        })
+    }
+
+    /// Returns Euler's number as the library packs it, `LibDecimalFloat.FLOAT_E`,
+    /// read through the contract's `e()`.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Float)` - The constant e.
+    /// * `Err(FloatError)` - If the EVM call fails.
+    pub fn e() -> Result<Self, FloatError> {
+        let calldata = DecimalFloat::eCall {}.abi_encode();
+
+        execute_call(Bytes::from(calldata), |output| {
+            let decoded = DecimalFloat::eCall::abi_decode_returns(output.as_ref())?;
             Ok(Float(decoded))
         })
     }
