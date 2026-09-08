@@ -238,6 +238,8 @@ impl Float {
         })
     }
 
+    /// The signed coefficient and exponent the library unpacks from this float.
+    /// The signed coefficient and exponent the library unpacks from this float.
     #[cfg(any(test, feature = "test-harness"))]
     pub fn unpack(self) -> Result<(alloy::primitives::I256, alloy::primitives::I256), FloatError> {
         let Float(float) = self;
@@ -253,6 +255,8 @@ impl Float {
         })
     }
 
+    /// `<coefficient>e<exponent>`, as unpacked by the library.
+    /// `<coefficient>e<exponent>`, as unpacked by the library.
     #[cfg(any(test, feature = "test-harness"))]
     pub fn show_unpacked(self) -> Result<String, FloatError> {
         let (coefficient, exponent) = self.unpack()?;
