@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.1.7/src/lib/LibDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.1/src/lib/LibDecimalFloat.sol";
 import {LogTest} from "test/abstract/LogTest.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
-import {LibFormatDecimalFloat} from "rain-math-float-0.1.7/src/lib/format/LibFormatDecimalFloat.sol";
-import {ScientificMinNotLessThanMax} from "rain-math-float-0.1.7/src/error/ErrDecimalFloat.sol";
+import {LibFormatDecimalFloat} from "rain-math-float-0.2.1/src/lib/format/LibFormatDecimalFloat.sol";
+import {ScientificMinNotLessThanMax} from "rain-math-float-0.2.1/src/error/ErrDecimalFloat.sol";
 
 contract DecimalFloatFormatTest is LogTest {
     using LibDecimalFloat for Float;

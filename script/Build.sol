@@ -4,7 +4,7 @@ pragma solidity =0.8.25;
 
 import {BuildScript} from "rain-deploy-0.1.7/src/abstract/BuildScript.sol";
 import {LibCodeGen} from "rain-sol-codegen-0.1.36/src/lib/LibCodeGen.sol";
-import {LibLogTable} from "rain-math-float-0.1.7/src/lib/table/LibLogTable.sol";
+import {LibLogTable} from "rain-math-float-0.2.1/src/lib/table/LibLogTable.sol";
 import {LibRainDeploySnapshot} from "rain-deploy-0.1.7/src/lib/LibRainDeploySnapshot.sol";
 import {DeployCandidate} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
