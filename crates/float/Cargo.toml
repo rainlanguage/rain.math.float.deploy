@@ -7,6 +7,12 @@ description = "Decimal floating-point arithmetic for Rainlang / DeFi smart contr
 homepage = "https://github.com/rainlanguage/rain.math.float.deploy"
 repository = "https://github.com/rainlanguage/rain.math.float.deploy"
 
+[features]
+# Exposes the TestDecimalFloat harness (packLossless / unpack / the log tables)
+# and the artifact override in `evm.rs` outside `cfg(test)`, for a consumer
+# running these bindings' tests over its own build of the concrete.
+test-harness = ["dep:serde_json"]
+
 [lib]
 crate-type = ["rlib"]
 
@@ -17,6 +23,7 @@ alloy = { version = "1.0.9", default-features = false, features = [
   "json-abi",
 ] }
 thiserror = "2.0.12"
+serde_json = { version = "1.0.140", optional = true }
 serde = "1.0.219"
 # wasm-bindgen must be a direct dependency: the #[wasm_bindgen] macro emits
 # `::wasm_bindgen` paths, and without a direct dep on the crate they fail to
