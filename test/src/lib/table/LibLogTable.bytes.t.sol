@@ -3,7 +3,7 @@
 pragma solidity =0.8.25;
 
 import {Test} from "forge-std-1.16.2/src/Test.sol";
-import {LibLogTable} from "rain-math-float-0.1.7/src/lib/table/LibLogTable.sol";
+import {LibLogTable} from "rain-math-float-0.2.1/src/lib/table/LibLogTable.sol";
 import {
     LOG_TABLES,
     LOG_TABLES_SMALL,

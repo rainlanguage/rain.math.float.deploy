@@ -17,8 +17,8 @@ import {
     DEPLOYED_ADDRESS as DECIMAL_FLOAT_CANDIDATE_ADDRESS,
     BYTECODE_HASH as DECIMAL_FLOAT_CANDIDATE_HASH
 } from "../../generated/candidate/DecimalFloat.sol";
-import {LOG_TABLE_DISAMBIGUATOR} from "rain-math-float-0.1.7/src/lib/table/LibLogTable.sol";
-import {LogTablesNotDeployed} from "rain-math-float-0.1.7/src/error/ErrDecimalFloat.sol";
+import {LOG_TABLE_DISAMBIGUATOR} from "rain-math-float-0.2.1/src/lib/table/LibLogTable.sol";
+import {LogTablesNotDeployed} from "rain-math-float-0.2.1/src/error/ErrDecimalFloat.sol";
 
 /// @title LibDecimalFloatDeploy
 /// @notice The consumer-facing deploy surface of this package: the Zoltu

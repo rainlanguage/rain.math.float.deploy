@@ -4,7 +4,7 @@ pragma solidity =0.8.25;
 
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {TestDecimalFloat} from "./TestDecimalFloat.sol";
-import {LibDecimalFloat, Float} from "rain-math-float-0.1.7/src/lib/LibDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.1/src/lib/LibDecimalFloat.sol";
 
 contract TestDecimalFloatUnpackTest is Test {
     using LibDecimalFloat for Float;

@@ -4,8 +4,8 @@ pragma solidity =0.8.25;
 
 import {LogTest} from "test/abstract/LogTest.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
-import {LibDecimalFloat, Float} from "rain-math-float-0.1.7/src/lib/LibDecimalFloat.sol";
-import {FixedDecimalOverflow} from "rain-math-float-0.1.7/src/error/ErrDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.1/src/lib/LibDecimalFloat.sol";
+import {FixedDecimalOverflow} from "rain-math-float-0.2.1/src/error/ErrDecimalFloat.sol";
 
 contract DecimalFloatToFixedDecimalLossyTest is LogTest {
     using LibDecimalFloat for Float;

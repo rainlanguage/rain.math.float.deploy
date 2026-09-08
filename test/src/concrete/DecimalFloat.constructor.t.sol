@@ -5,7 +5,7 @@ pragma solidity =0.8.25;
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
-import {LogTablesNotDeployed} from "rain-math-float-0.1.7/src/error/ErrDecimalFloat.sol";
+import {LogTablesNotDeployed} from "rain-math-float-0.2.1/src/error/ErrDecimalFloat.sol";
 import {LibEtchLogTables} from "script/lib/LibEtchLogTables.sol";
 
 /// Direct tests for the `DecimalFloat` constructor's log-tables guard. These
