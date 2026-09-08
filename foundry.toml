@@ -79,11 +79,6 @@ forge-std = "1.16.2"
 "rain-datacontract" = "0.1.9"
 "rain-deploy" = "0.1.7"
 "rain-sol-codegen" = "0.1.36"
-# The library half. Provides LibDecimalFloat, LibDecimalFloatImplementation,
-# LibFormatDecimalFloat, LibParseDecimalFloat, LibLogTable and the errors that
-# the concrete + deploy lib + tests here import. Pinned at the current published
-# library; bump to the first post-strip `rain-math-float` release once it
-# publishes (a `soldeer update`, which rewrites the versioned import prefixes).
 "rain-math-float" = "0.2.1"
 
 [soldeer]
