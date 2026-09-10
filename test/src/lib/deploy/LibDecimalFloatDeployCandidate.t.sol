@@ -3,7 +3,7 @@
 pragma solidity =0.8.25;
 
 import {Test} from "forge-std-1.16.2/src/Test.sol";
-import {LibRainDeploy} from "rain-deploy-0.1.7/src/lib/LibRainDeploy.sol";
+import {LibRainDeploy} from "rain-deploy-0.1.8/src/lib/LibRainDeploy.sol";
 import {LibDataContract} from "rain-datacontract-0.1.9/src/lib/LibDataContract.sol";
 import {
     BYTECODE_HASH as LOG_TABLES_BYTECODE_HASH,
