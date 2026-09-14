@@ -77,8 +77,8 @@ forge-std = "1.16.2"
 "rain-solmem" = "0.1.28"
 "rain-string" = "0.2.0"
 "rain-datacontract" = "0.1.9"
-"rain-deploy" = "0.1.8"
-"rain-sol-codegen" = "0.1.36"
+"rain-deploy" = "0.1.10"
+"rain-sol-codegen" = "0.1.37"
 "rain-math-float" = "0.2.1"
 
 [soldeer]
