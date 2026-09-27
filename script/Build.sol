@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {BuildScript} from "rain-deploy-0.1.10/src/abstract/BuildScript.sol";
+import {BuildScript} from "rain-deploy-0.1.11/src/abstract/BuildScript.sol";
 import {LibCodeGen} from "rain-sol-codegen-0.1.37/src/lib/LibCodeGen.sol";
 import {LibLogTable} from "rain-math-float-0.2.4/src/lib/table/LibLogTable.sol";
-import {LibRainDeploySnapshot} from "rain-deploy-0.1.10/src/lib/LibRainDeploySnapshot.sol";
+import {LibRainDeploySnapshot} from "rain-deploy-0.1.11/src/lib/LibRainDeploySnapshot.sol";
 import {DeployCandidate} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
 
@@ -141,6 +141,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
         for (uint256 i = 0; i < contracts.length; i++) {
             LibRainDeploySnapshot.writeSnapshot(
                 vm,
+                recordRoot(),
                 LibRainDeploySnapshot.CANDIDATE,
                 contracts[i].contractName,
                 contracts[i].candidate.sourceCreationCode,
