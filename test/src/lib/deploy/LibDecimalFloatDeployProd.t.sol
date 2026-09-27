@@ -70,7 +70,22 @@ contract LibDecimalFloatDeployProdTest is Test {
     /// then an ABI encoded string, so both decode the same way. Anything with a
     /// different shape falls back to hex rather than reverting inside the
     /// handler and losing every other network's result with it.
-    function reasonOf(bytes memory err) internal pure returns (string memory) {
+    ///
+    /// The decode goes through an external call so that a malformed payload is
+    /// CAUGHT rather than merely predicted. The cheap shape checks below cannot
+    /// be complete: a payload can carry the right offset word and still declare
+    /// a length its data does not cover, and `abi.decode` reverts on that. This
+    /// function runs inside the walk's `catch`, so a revert here does not fall
+    /// back — it propagates and takes every other network's result with it,
+    /// which is the exact failure the fallback exists to prevent. Bounds
+    /// arithmetic would have to be right about every malformed shape; `try` is
+    /// right about all of them by construction.
+    function decodeStringExternal(bytes memory payload) external pure returns (string memory) {
+        return abi.decode(payload, (string));
+    }
+
+    /// See `decodeStringExternal` for why the decode is an external call.
+    function reasonOf(bytes memory err) internal view returns (string memory) {
         if (err.length < 68) {
             return vm.toString(err);
         }
@@ -79,7 +94,10 @@ contract LibDecimalFloatDeployProdTest is Test {
             payload[i] = err[i + 4];
         }
         // The offset word of an ABI encoded string is always 0x20; a payload
-        // that does not start with it is not one.
+        // that does not start with it is not one. Kept as a shape check even
+        // though the `try` below would catch the resulting revert, because a
+        // custom error whose first word happens to be a valid offset could
+        // otherwise decode into a garbage string instead of falling back.
         //
         // Truncating to the first word is the entire point of the cast: the
         // rest of the payload is the string this is deciding whether to decode.
@@ -88,7 +106,39 @@ contract LibDecimalFloatDeployProdTest is Test {
         if (uint256(offsetWord) != 0x20) {
             return vm.toString(err);
         }
-        return abi.decode(payload, (string));
+        try this.decodeStringExternal(payload) returns (string memory reason) {
+            return reason;
+        } catch {
+            return vm.toString(err);
+        }
+    }
+
+    /// A well formed `Error(string)` payload decodes to its text, which is the
+    /// whole reason the walk reports reasons rather than hex.
+    function testReasonOfDecodesRevertString() external view {
+        bytes memory err = abi.encodeWithSignature("Error(string)", "arbitrum: nope");
+        assertEq(reasonOf(err), "arbitrum: nope");
+    }
+
+    /// A payload carrying the right offset word but a length its data does not
+    /// cover. `abi.decode` reverts on this. Before the decode was moved behind
+    /// an external call that revert propagated out of the walk's `catch` and
+    /// took every other network's result with it, so this asserts the fallback
+    /// rather than the decode.
+    function testReasonOfSurvivesMalformedStringPayload() external view {
+        bytes memory err = abi.encodePacked(bytes4(0x08c379a0), uint256(0x20), type(uint256).max);
+        assertEq(err.length, 68, "payload should be exactly the minimum accepted length");
+        assertEq(reasonOf(err), vm.toString(err), "malformed payload should fall back to hex");
+    }
+
+    /// The other half of the test above, and the reason it is not vacuous: the
+    /// same payload really does revert `abi.decode`. Without this, a change that
+    /// made the payload decodable would leave the fallback test passing for the
+    /// wrong reason and prove nothing about the `try`.
+    function testMalformedStringPayloadDoesRevertAbiDecode() external {
+        bytes memory payload = abi.encodePacked(uint256(0x20), type(uint256).max);
+        vm.expectRevert();
+        this.decodeStringExternal(payload);
     }
 
     function testProdDeploymentEverySupportedNetwork() external {
