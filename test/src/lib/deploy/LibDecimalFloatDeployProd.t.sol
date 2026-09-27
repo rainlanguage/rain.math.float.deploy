@@ -31,23 +31,68 @@ contract LibDecimalFloatDeployProdTest is Test {
         );
     }
 
-    function testProdDeploymentArbitrum() external {
-        checkProdDeployment("arbitrum");
+    /// EVERY supported network, taken from `LibRainDeploy.supportedNetworks()`
+    /// rather than named here.
+    ///
+    /// The five names this file used to list were a subset: `bsc`, `ethereum`,
+    /// `hyperevm` and `robinhood` are supported, are configured in
+    /// `[rpc_endpoints]` and `[etherscan]`, and were never checked. A hardcoded
+    /// list cannot notice that, which is why the list is the source and this
+    /// walks it — a network added upstream is covered here without an edit, and
+    /// one removed stops being checked without a stale test failing.
+    ///
+    /// `testSupportedNetworksAreFullyConfigured` guards the config against the
+    /// same list, so config and coverage now derive from one place.
+    /// Each network is checked through an external call so a revert on one does
+    /// not abort the walk. The five test functions this replaced reported per
+    /// network; a bare loop would hide every network after the first failure,
+    /// which is the opposite of useful when the question is WHICH chains are
+    /// missing a deployment.
+    function checkProdDeploymentExternal(string memory network) external {
+        checkProdDeployment(network);
     }
 
-    function testProdDeploymentBase() external {
-        checkProdDeployment("base");
+    /// The revert reason as text, so the failure message names what went wrong
+    /// rather than handing a CI reader a hex blob to decode.
+    ///
+    /// A failed assertion and a cheatcode error both carry a 4 byte selector
+    /// then an ABI encoded string, so both decode the same way. Anything with a
+    /// different shape falls back to hex rather than reverting inside the
+    /// handler and losing every other network's result with it.
+    function reasonOf(bytes memory err) internal pure returns (string memory) {
+        if (err.length < 68) {
+            return vm.toString(err);
+        }
+        bytes memory payload = new bytes(err.length - 4);
+        for (uint256 i = 0; i < payload.length; i++) {
+            payload[i] = err[i + 4];
+        }
+        // The offset word of an ABI encoded string is always 0x20; a payload
+        // that does not start with it is not one.
+        //
+        // Truncating to the first word is the entire point of the cast: the
+        // rest of the payload is the string this is deciding whether to decode.
+        // forge-lint: disable-next-line(unsafe-typecast)
+        bytes32 offsetWord = bytes32(payload);
+        if (uint256(offsetWord) != 0x20) {
+            return vm.toString(err);
+        }
+        return abi.decode(payload, (string));
     }
 
-    function testProdDeploymentBaseSepolia() external {
-        checkProdDeployment("base_sepolia");
-    }
+    function testProdDeploymentEverySupportedNetwork() external {
+        string[] memory networks = LibRainDeploy.supportedNetworks();
+        // A list that came back empty would pass every assertion below by
+        // never running one.
+        assertTrue(networks.length > 0, "no supported networks");
 
-    function testProdDeploymentFlare() external {
-        checkProdDeployment("flare");
-    }
-
-    function testProdDeploymentPolygon() external {
-        checkProdDeployment("polygon");
+        string memory failures = "";
+        for (uint256 i = 0; i < networks.length; i++) {
+            try this.checkProdDeploymentExternal(networks[i]) {}
+            catch (bytes memory err) {
+                failures = string.concat(failures, "\n", networks[i], ": ", reasonOf(err));
+            }
+        }
+        assertEq(failures, "", failures);
     }
 }

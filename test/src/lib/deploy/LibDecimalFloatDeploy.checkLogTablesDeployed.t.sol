@@ -5,6 +5,7 @@ pragma solidity =0.8.25;
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
 import {LibDataContract} from "rain-datacontract-0.1.9/src/lib/LibDataContract.sol";
+import {LibRainDeploy} from "rain-deploy-0.1.11/src/lib/LibRainDeploy.sol";
 import {LogTablesNotDeployed} from "rain-math-float-0.2.4/src/error/ErrDecimalFloat.sol";
 
 /// Direct tests for `LibDecimalFloatDeploy.checkLogTablesDeployed`. These
@@ -42,15 +43,19 @@ contract LibDecimalFloatDeployCheckLogTablesDeployedTest is Test {
     }
 
     /// Correct table runtime at the expected address → no revert.
+    ///
+    /// Through the factory, which lands the deployment on the pin as a
+    /// consequence of the creation code. An earlier version deployed to a
+    /// nonce-dependent address and etched the runtime across to the pin, which
+    /// is what the factory does — reproduced by hand, and weaker for it: an
+    /// etch writes the runtime wherever it is told, so it would keep passing if
+    /// the creation code and the pinned address had diverged. The factory not
+    /// landing on the pin is a failure here instead.
     function testCheckLogTablesDeployedSucceedsWhenPresent() external {
+        LibRainDeploy.etchZoltuFactory(vm);
         bytes memory tables = LibDecimalFloatDeploy.combinedTables();
-        bytes memory creationCode = LibDataContract.contractCreationCode(tables);
-        address temp;
-        assembly ("memory-safe") {
-            temp := create(0, add(creationCode, 0x20), mload(creationCode))
-        }
-        require(temp != address(0), "log tables deploy failed in test setup");
-        vm.etch(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS, temp.code);
+        address deployed = LibRainDeploy.deployZoltu(LibDataContract.contractCreationCode(tables));
+        assertEq(deployed, LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS, "tables off their pinned address");
         // Should not revert.
         this.callCheckLogTablesDeployed();
     }
@@ -59,16 +64,13 @@ contract LibDecimalFloatDeployCheckLogTablesDeployedTest is Test {
     /// with same-length zeroes flips the codehash and the call reverts.
     /// Confirms the test is keyed on the codehash check, not anything else.
     function testCheckLogTablesDeployedMutation() external {
+        LibRainDeploy.etchZoltuFactory(vm);
         bytes memory tables = LibDecimalFloatDeploy.combinedTables();
-        bytes memory creationCode = LibDataContract.contractCreationCode(tables);
-        address temp;
-        assembly ("memory-safe") {
-            temp := create(0, add(creationCode, 0x20), mload(creationCode))
-        }
-        vm.etch(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS, temp.code);
+        address deployed = LibRainDeploy.deployZoltu(LibDataContract.contractCreationCode(tables));
+        assertEq(deployed, LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS, "tables off their pinned address");
         this.callCheckLogTablesDeployed();
 
-        bytes memory zeros = new bytes(temp.code.length);
+        bytes memory zeros = new bytes(deployed.code.length);
         vm.etch(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS, zeros);
         vm.expectRevert();
         this.callCheckLogTablesDeployed();

@@ -86,7 +86,7 @@ forge-std = "1.16.2"
 recursive_deps = false
 
 # One alias per network `script/Deploy.sol` broadcasts to, which is
-# `LibRainDeploy.supportedNetworks()` — all seven. A network the script
+# `LibRainDeploy.supportedNetworks()`. A network the script
 # selects but this section does not name is not a skip: `vm.createSelectFork`
 # reverts with "invalid rpc url: <alias>" and takes the whole deploy down,
 # after it has already broadcast to the networks ahead of it in the list.
@@ -106,17 +106,23 @@ polygon = "${POLYGON_RPC_URL}"
 # fails with no API key configured for the chain. One entry per
 # `[rpc_endpoints]` alias, because the deploy goes to all of them.
 #
-# "chain" is stated on ethereum and hyperevm because foundry does not know
-# those alias strings as chain names — its own names for them are "mainnet"
-# and "hyperliquid" — so without it the entry cannot be matched to the chain
-# being verified against. The other five aliases foundry resolves itself.
-# `forge config` prints the resolved chain per entry.
+# "chain" is stated on EVERY entry, not only the aliases foundry cannot resolve
+# itself. `rain-deploy`'s `checkEtherscanEntriesResolvable` requires it, because
+# the set foundry resolves is foundry's own table and moves under a toolchain
+# bump — and foundry resolves the whole section rather than the single entry a
+# `--verify` needs, so one unresolvable entry fails the verify for every network.
+# Stating a chain an alias already resolves to resolves it to the same chain, so
+# the strict form only ever agrees with the loose one.
+#
+# The ids are verified rather than trusted: `testSupportedNetworkChainIdsAreBound`
+# forks each network and compares. `forge config` prints the resolved chain per
+# entry.
 [etherscan]
-arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}" }
-base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}" }
-base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}" }
+arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}", chain = 42161 }
+base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}", chain = 8453 }
+base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}", chain = 84532 }
 ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
-flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}" }
+flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}", chain = 14 }
 hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 # Robinhood Chain (4663) is not indexed by Etherscan V2. Its Blockscout speaks
 # the Etherscan API, so the entry points there (the key is ignored). That
@@ -125,4 +131,4 @@ hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 # sourcify --chain 4663 ...`.
 robinhood = { key = "${CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY}", chain = 4663, url = "https://robinhoodchain.blockscout.com/api" }
 bsc = { key = "${CI_DEPLOY_BSC_ETHERSCAN_API_KEY}", chain = 56 }
-polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}" }
+polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}", chain = 137 }

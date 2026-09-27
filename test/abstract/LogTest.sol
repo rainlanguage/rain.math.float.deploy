@@ -25,6 +25,18 @@ abstract contract LogTest is Test {
         );
     }
 
+    /// A SECOND copy of the tables, at a nonce-dependent address that is
+    /// deliberately not `ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS` — `setUp` has
+    /// already put a copy there.
+    ///
+    /// The raw `create` is the point and not an un-migrated call site. Tests
+    /// that take a log-tables address as an argument use this one so that
+    /// passing it is distinguishable from reading the pinned constant: if both
+    /// addresses were the pin, a function that ignored its argument entirely
+    /// would still pass. `LibRainDeploy.deployZoltu` cannot serve here, because
+    /// the address it lands on is a function of the creation code alone, so for
+    /// this creation code it is the pin — which `setUp` has occupied, making the
+    /// second deployment fail rather than yield a distinct address.
     function logTables() internal returns (address) {
         if (sTables == address(0)) {
             bytes memory tables = LibDecimalFloatDeploy.combinedTables();

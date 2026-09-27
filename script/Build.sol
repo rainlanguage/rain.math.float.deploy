@@ -9,21 +9,29 @@ import {LibRainDeploySnapshot} from "rain-deploy-0.1.11/src/lib/LibRainDeploySna
 import {DeployCandidate} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
 
-/// @dev Committed path of the generated log tables. The `.pointers.sol` suffix
+/// @dev Committed LEAF NAME of the generated log tables, under `recordRoot()`.
+///
+/// The directory is not spelled here. Every other write in this script takes it
+/// from `recordRoot()`, and spelling `src/generated` again would make this the
+/// one path upstream does not own: it would keep writing to the old place if
+/// `LIB_FS_ROOT` moved, and would ignore a `recordRoot()` override, which exists
+/// so `cutRelease()` can be exercised against a record other than the repo's own.
+///
+/// The `.pointers.sol` suffix
 /// is the one the deploy pins and importers reference. The file is pure
 /// log-table data with no contract instance behind it, so it carries no
 /// bytecode-hash constant and is written directly rather than through
 /// `LibFs.buildFileForContract`, which heads every file it writes with the hash
 /// of an instance and reverts on the codeless `address(0)` this build has.
 ///
-/// It sits at the root of `src/generated/` rather than in a snapshot directory
+/// It sits at the root of the record rather than in a snapshot directory
 /// because it is not a deploy record: it holds the table BYTES, which are a
 /// pure function of `LibLogTable` and carry no address, code hash or tag. The
 /// deploy record of the data contract those bytes are wrapped in is
 /// `src/generated/candidate/LogTables.sol`, and only tag-shaped directories
 /// under this root are releases — a loose file here is one neither
 /// `frozenSnapshotPaths` nor `release-guard` reads as a snapshot.
-string constant GENERATED_LOG_TABLES = "src/generated/LogTables.pointers.sol";
+string constant GENERATED_LOG_TABLES_LEAF = "LogTables.pointers.sol";
 
 /// One contract's generated files: the rolling snapshot and the released-suites
 /// lib emitted from its record.
@@ -84,7 +92,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
     function regenerateLogTables() internal {
         //forge-lint: disable-next-line(unsafe-cheatcode)
         vm.writeFile(
-            GENERATED_LOG_TABLES,
+            string.concat(recordRoot(), "/", GENERATED_LOG_TABLES_LEAF),
             string.concat(
                 LibCodeGen.filePrefix(),
                 LibCodeGen.bytesConstantString(

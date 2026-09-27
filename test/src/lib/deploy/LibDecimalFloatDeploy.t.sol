@@ -54,10 +54,13 @@ contract LibDecimalFloatDeployTest is Test {
     function testExpectedCodeHashLogTables() external {
         bytes memory logTables = LibDataContract.contractCreationCode(LibDecimalFloatDeploy.combinedTables());
 
-        address deployedAddress;
-        assembly ("memory-safe") {
-            deployedAddress := create(0, add(logTables, 0x20), mload(logTables))
-        }
+        // Through the factory, matching `testDeployAddressLogTables` above
+        // rather than hand-rolling a second spelling of the same deployment in
+        // the same file. Only the codehash is under test here, so where the
+        // deployment lands is incidental — but the runtime code a creation code
+        // produces is not a function of the deployer, so there is nothing a raw
+        // `create` tests that this does not.
+        address deployedAddress = LibRainDeploy.deployZoltu(logTables);
 
         assertEq(deployedAddress.codehash, LibDecimalFloatDeploy.LOG_TABLES_DATA_CONTRACT_HASH);
         assertTrue(address(deployedAddress).code.length > 0, "Deployed address has no code");
