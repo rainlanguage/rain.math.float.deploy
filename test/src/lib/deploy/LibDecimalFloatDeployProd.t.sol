@@ -17,8 +17,11 @@ contract LibDecimalFloatDeployProdTest is Test {
     /// walk rather than here, because a cheatcode failure — an unset
     /// `*_RPC_URL`, say — reverts before any assertion and so can only be named
     /// by the caller.
-    function checkProdDeployment(string memory network) internal {
-        vm.createSelectFork(network);
+    /// Takes a fork ID rather than a network name, and SELECTS ONLY. The fork
+    /// must already exist. See `testProdDeploymentEverySupportedNetwork` for why
+    /// creating it here would be wrong.
+    function checkProdDeployment(uint256 forkId) internal {
+        vm.selectFork(forkId);
 
         address logTables = LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS;
         assertTrue(logTables.code.length > 0, "log tables not deployed");
@@ -59,8 +62,14 @@ contract LibDecimalFloatDeployProdTest is Test {
     /// network; a bare loop would hide every network after the first failure,
     /// which is the opposite of useful when the question is WHICH chains are
     /// missing a deployment.
-    function checkProdDeploymentExternal(string memory network) external {
-        checkProdDeployment(network);
+    function checkProdDeploymentExternal(uint256 forkId) external {
+        checkProdDeployment(forkId);
+    }
+
+    /// Creates one fork, external so an unreachable endpoint is reported against
+    /// its own network instead of aborting the run.
+    function createForkExternal(string memory network) external returns (uint256) {
+        return vm.createFork(network);
     }
 
     /// The revert reason as text, so the failure message names what went wrong
@@ -141,6 +150,27 @@ contract LibDecimalFloatDeployProdTest is Test {
         this.decodeStringExternal(payload);
     }
 
+    /// EVERY fork is created before ANY fork is selected, in two passes.
+    ///
+    /// `LibRainDeploy.createForks` documents why: foundry captures the pre-fork
+    /// account set when the first fork is SELECTED, and seeds every fork created
+    /// after that capture with it, so such a fork reads any address the caller
+    /// had already touched as the empty account a bare 31337 EVM has for it. A
+    /// single `createSelectFork` loop creates fork N after the capture for every
+    /// N above the first.
+    ///
+    /// This loop is correct today only by accident: nothing here touches the
+    /// pinned addresses before the first select, so nothing is in the captured
+    /// set to carry forward. A `setUp` that etched the tables — the obvious thing
+    /// for someone to add — would put them in it and silently turn eight of the
+    /// nine networks into `DecimalFloat not deployed`, naming real addresses on
+    /// chains that really hold them. Two passes remove the accident.
+    ///
+    /// Not `LibRainDeploy.createForks` itself, which is this same creation in one
+    /// call. It creates the forks in a plain loop, so the first unreachable
+    /// endpoint reverts and the remaining networks are never reported. Creating
+    /// them one at a time through an external call keeps an outage attributed to
+    /// its own network, the same way a missing deployment is.
     function testProdDeploymentEverySupportedNetwork() external {
         string[] memory networks = LibRainDeploy.supportedNetworks();
         // A list that came back empty would pass every assertion below by
@@ -148,12 +178,31 @@ contract LibDecimalFloatDeployProdTest is Test {
         assertTrue(networks.length > 0, "no supported networks");
 
         string memory failures = "";
+
+        // Pass 1: create every fork. Nothing is selected yet.
+        uint256[] memory forkIds = new uint256[](networks.length);
+        bool[] memory created = new bool[](networks.length);
         for (uint256 i = 0; i < networks.length; i++) {
-            try this.checkProdDeploymentExternal(networks[i]) {}
+            try this.createForkExternal(networks[i]) returns (uint256 forkId) {
+                forkIds[i] = forkId;
+                created[i] = true;
+            } catch (bytes memory err) {
+                failures = string.concat(failures, "\n", networks[i], ": ", reasonOf(err));
+            }
+        }
+
+        // Pass 2: select each in turn and check it. A network whose fork could
+        // not be created has already been reported above.
+        for (uint256 i = 0; i < networks.length; i++) {
+            if (!created[i]) {
+                continue;
+            }
+            try this.checkProdDeploymentExternal(forkIds[i]) {}
             catch (bytes memory err) {
                 failures = string.concat(failures, "\n", networks[i], ": ", reasonOf(err));
             }
         }
+
         assertEq(failures, "", failures);
     }
 }
