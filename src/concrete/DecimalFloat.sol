@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.1/src/lib/LibDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.4/src/lib/LibDecimalFloat.sol";
 import {LibDecimalFloatDeploy} from "../lib/deploy/LibDecimalFloatDeploy.sol";
-import {LibFormatDecimalFloat} from "rain-math-float-0.2.1/src/lib/format/LibFormatDecimalFloat.sol";
-import {LibParseDecimalFloat} from "rain-math-float-0.2.1/src/lib/parse/LibParseDecimalFloat.sol";
-import {ScientificMinNotLessThanMax} from "rain-math-float-0.2.1/src/error/ErrDecimalFloat.sol";
+import {LibFormatDecimalFloat} from "rain-math-float-0.2.4/src/lib/format/LibFormatDecimalFloat.sol";
+import {LibParseDecimalFloat} from "rain-math-float-0.2.4/src/lib/parse/LibParseDecimalFloat.sol";
+import {ScientificMinNotLessThanMax} from "rain-math-float-0.2.4/src/error/ErrDecimalFloat.sol";
 
 contract DecimalFloat {
     using LibDecimalFloat for Float;
@@ -273,6 +273,22 @@ contract DecimalFloat {
     /// @return The larger of the two floats.
     function max(Float a, Float b) external pure returns (Float) {
         return a.max(b);
+    }
+
+    /// Exposes `LibDecimalFloat.agree` for offchain use.
+    ///
+    /// Reverts `AgreeToleranceNegative` if either tolerance is negative and
+    /// `AgreeNoPositiveTolerance` if neither is positive, so an offchain caller
+    /// sees the same rejections as an onchain one rather than a silent answer on
+    /// a tolerance that cannot mean anything.
+    /// @param absolute The absolute tolerance, in the same units as the values.
+    /// @param proportional The proportional tolerance, as a fraction.
+    /// @param lowest The lowest value in the set.
+    /// @param highest The highest value in the set.
+    /// @return True if the spread between the extremes is within the larger of
+    /// the two tolerance terms.
+    function agree(Float absolute, Float proportional, Float lowest, Float highest) external pure returns (bool) {
+        return LibDecimalFloat.agree(absolute, proportional, lowest, highest);
     }
 
     /// Exposes `LibDecimalFloat.isZero` for offchain use.
