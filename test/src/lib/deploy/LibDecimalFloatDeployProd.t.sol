@@ -41,8 +41,9 @@ contract LibDecimalFloatDeployProdTest is Test {
     /// walks it — a network added upstream is covered here without an edit, and
     /// one removed stops being checked without a stale test failing.
     ///
-    /// `testSupportedNetworksAreFullyConfigured` guards the config against the
-    /// same list, so config and coverage now derive from one place.
+    /// Upstream's `testSupportedNetworkChainIdsAreBound`, inherited through
+    /// `test/src/abstract/DecimalFloatDeployChain.t.sol`, guards the config
+    /// against the same list, so config and coverage now derive from one place.
     /// Each network is checked through an external call so a revert on one does
     /// not abort the walk. The five test functions this replaced reported per
     /// network; a bare loop would hide every network after the first failure,
