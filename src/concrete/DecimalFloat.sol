@@ -275,6 +275,22 @@ contract DecimalFloat {
         return a.max(b);
     }
 
+    /// Exposes `LibDecimalFloat.agree` for offchain use.
+    ///
+    /// Reverts `AgreeToleranceNegative` if either tolerance is negative and
+    /// `AgreeNoPositiveTolerance` if neither is positive, so an offchain caller
+    /// sees the same rejections as an onchain one rather than a silent answer on
+    /// a tolerance that cannot mean anything.
+    /// @param absolute The absolute tolerance, in the same units as the values.
+    /// @param proportional The proportional tolerance, as a fraction.
+    /// @param lowest The lowest value in the set.
+    /// @param highest The highest value in the set.
+    /// @return True if the spread between the extremes is within the larger of
+    /// the two tolerance terms.
+    function agree(Float absolute, Float proportional, Float lowest, Float highest) external pure returns (bool) {
+        return LibDecimalFloat.agree(absolute, proportional, lowest, highest);
+    }
+
     /// Exposes `LibDecimalFloat.isZero` for offchain use.
     /// @param a The float to check.
     /// @return True if the float is zero, false otherwise.
