@@ -11,23 +11,25 @@ import {LibRainDeploy} from "rain-deploy-0.1.11/src/lib/LibRainDeploy.sol";
 /// contract are deployed on every supported production network with the expected
 /// addresses and code hashes.
 contract LibDecimalFloatDeployProdTest is Test {
+    /// The assertion messages do NOT name the network. The walk below prefixes
+    /// every line it collects with the network, and naming it here too produced
+    /// `flare: flare: DecimalFloat not deployed` in CI. The prefix belongs to the
+    /// walk rather than here, because a cheatcode failure — an unset
+    /// `*_RPC_URL`, say — reverts before any assertion and so can only be named
+    /// by the caller.
     function checkProdDeployment(string memory network) internal {
         vm.createSelectFork(network);
 
         address logTables = LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS;
-        assertTrue(logTables.code.length > 0, string.concat(network, ": log tables not deployed"));
+        assertTrue(logTables.code.length > 0, "log tables not deployed");
         assertEq(
-            logTables.codehash,
-            LibDecimalFloatDeploy.LOG_TABLES_DATA_CONTRACT_HASH,
-            string.concat(network, ": log tables code hash mismatch")
+            logTables.codehash, LibDecimalFloatDeploy.LOG_TABLES_DATA_CONTRACT_HASH, "log tables code hash mismatch"
         );
 
         address decimalFloat = LibDecimalFloatDeploy.ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS;
-        assertTrue(decimalFloat.code.length > 0, string.concat(network, ": DecimalFloat not deployed"));
+        assertTrue(decimalFloat.code.length > 0, "DecimalFloat not deployed");
         assertEq(
-            decimalFloat.codehash,
-            LibDecimalFloatDeploy.DECIMAL_FLOAT_CONTRACT_HASH,
-            string.concat(network, ": DecimalFloat code hash mismatch")
+            decimalFloat.codehash, LibDecimalFloatDeploy.DECIMAL_FLOAT_CONTRACT_HASH, "DecimalFloat code hash mismatch"
         );
     }
 
@@ -41,9 +43,17 @@ contract LibDecimalFloatDeployProdTest is Test {
     /// walks it — a network added upstream is covered here without an edit, and
     /// one removed stops being checked without a stale test failing.
     ///
-    /// Upstream's `testSupportedNetworkChainIdsAreBound`, inherited through
-    /// `test/src/abstract/DecimalFloatDeployChain.t.sol`, guards the config
-    /// against the same list, so config and coverage now derive from one place.
+    /// Two upstream tests guard the CONFIG against the same list, so config and
+    /// coverage now derive from one place:
+    ///
+    /// - `testSupportedNetworksAreFullyConfigured`, in
+    ///   `RainDeployVerifySnapshot` and inherited through
+    ///   `test/src/abstract/DecimalFloatDeploySnapshot.t.sol`. It reads
+    ///   `foundry.toml` and needs no fork, so it is the one that catches a
+    ///   missing `[rpc_endpoints]` or `[etherscan]` entry locally.
+    /// - `testSupportedNetworkChainIdsAreBound`, in `RainDeployVerifyChain` and
+    ///   inherited through `test/src/abstract/DecimalFloatDeployChain.t.sol`. It
+    ///   forks each network that states a chain id, so it needs `*_RPC_URL`.
     /// Each network is checked through an external call so a revert on one does
     /// not abort the walk. The five test functions this replaced reported per
     /// network; a bare loop would hide every network after the first failure,
