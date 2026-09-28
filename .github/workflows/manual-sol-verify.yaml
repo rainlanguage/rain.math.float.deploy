@@ -5,9 +5,8 @@ name: Manual sol verify
 # a deploy that lands and then loses the race with an explorer's indexer cannot
 # be repaired by re-dispatching it: the Zoltu deploy is deterministic and
 # therefore idempotent, the rerun broadcasts nothing, and `--verify` has nothing
-# to submit. That is what happened to `DecimalFloat` at
-# 0xEc632ea4D04A6D72F87E60FEb4C6B6813cda59bd on 2026-09-28 — deployed to all
-# nine networks, then `Not all (0 / 1) contracts were verified!` after forty
+# to submit. That is what happened to `DecimalFloat` on 2026-09-28 — deployed to
+# all nine networks, then `Not all (0 / 1) contracts were verified!` after forty
 # `Pending in queue` polls.
 #
 # Never broadcasts and takes no deploy key.
@@ -15,32 +14,88 @@ on:
   workflow_dispatch:
     inputs:
       contract:
-        description: "Fully qualified artifact path (path:Contract)"
+        description: "Contract to verify"
         required: true
         type: choice
         options:
-          - src/concrete/DecimalFloat.sol:DecimalFloat
-      address:
-        description: "Address to submit source for"
-        required: true
-        type: string
-        default: "0xEc632ea4D04A6D72F87E60FEb4C6B6813cda59bd"
-      networks:
-        description: "Whitespace separated forge verify-contract --chain values"
-        required: true
-        type: string
-        # Chain IDs rather than names. `--chain` takes either, but foundry has no
-        # name for HyperEVM (999) or Robinhood Chain (4663), and `base_sepolia`
-        # is this repo's `[rpc_endpoints]` alias which `--chain` rejects outright
-        # (its name is `base-sepolia`). Every `[etherscan]` entry carries an
-        # explicit `chain`, so an ID resolves the right key and verifier URL for
-        # all nine — including Robinhood, whose entry points at its Blockscout.
-        default: "42161 8453 84532 56 1 14 999 137 4663"
+          - DecimalFloat
+          # Only `DecimalFloat` has source to verify. The other deployed artifact
+          # is the log tables, which is a data contract: `LibDataContract` creation
+          # code wrapping table BYTES, with no Solidity source an explorer could
+          # match it against.
 jobs:
+  # The address and the explorer list are READ from the repo, never typed into
+  # this file. Both have a single source already — the committed snapshot and
+  # `[etherscan]` — and a copy here would be a value that silently goes stale:
+  # the address moves whenever the creation code does (it moved to
+  # 0xEc632ea4 this week), and a network added to `[rpc_endpoints]` and
+  # `[etherscan]` would simply never be submitted to.
+  #
+  # A workflow input cannot read either, which is why this is a job that runs
+  # before the verify rather than a `default:`.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      contract: ${{ steps.pins.outputs.contract }}
+      address: ${{ steps.pins.outputs.address }}
+      networks: ${{ steps.pins.outputs.networks }}
+    steps:
+      - uses: rainlanguage/rainix/.github/actions/checkout@main
+      - id: pins
+        env:
+          CONTRACT: ${{ inputs.contract }}
+        run: |
+          set -euo pipefail
+
+          # `|| true` on both reads: under `set -e` with `pipefail` a grep that
+          # matches nothing exits 1 and kills the step, so the empty checks below
+          # would never run and the operator would get a bare exit code instead of
+          # being told which read came back empty.
+          snapshot="src/generated/candidate/$CONTRACT.sol"
+          address="$(grep -oE 'DEPLOYED_ADDRESS = address\(0x[0-9a-fA-F]{40}\)' "$snapshot" \
+            | grep -oE '0x[0-9a-fA-F]{40}' || true)"
+
+          # Scoped to the `[etherscan]` section: these are the explorers the repo
+          # is configured to submit to, and `testSupportedNetworksAreFullyConfigured`
+          # already fails the build when that set and
+          # `LibRainDeploy.supportedNetworks()` disagree. So this list cannot
+          # drift from the deploy's network list without CI saying so first.
+          #
+          # Chain IDs, not names. `--chain` takes either, but foundry has no name
+          # for HyperEVM (999) or Robinhood Chain (4663), and this repo's
+          # `base_sepolia` alias is rejected outright — foundry's name is
+          # `base-sepolia`. Every entry carries an explicit `chain`, so an ID
+          # resolves the right key and verifier URL for all of them.
+          networks="$(sed -n '/^\[etherscan\]/,/^\[/{/^\[/!p}' foundry.toml \
+            | grep -oE 'chain = [0-9]+' \
+            | grep -oE '[0-9]+' \
+            | tr '\n' ' ' || true)"
+
+          # A grep that matches nothing yields an empty string, and the verify
+          # below would then submit to no explorer and exit 0 having done
+          # nothing. Fail here instead, naming which read came back empty.
+          if [ -z "$address" ]
+          then
+            echo "::error::no DEPLOYED_ADDRESS in $snapshot"
+            exit 1
+          fi
+          if [ -z "${networks// /}" ]
+          then
+            echo "::error::no [etherscan] entries with a chain id in foundry.toml"
+            exit 1
+          fi
+
+          echo "verifying $CONTRACT at $address on:$networks"
+          {
+            echo "contract=src/concrete/$CONTRACT.sol:$CONTRACT"
+            echo "address=$address"
+            echo "networks=$networks"
+          } >> "$GITHUB_OUTPUT"
   verify:
+    needs: resolve
     uses: rainlanguage/rainix/.github/workflows/rainix-manual-sol-verify.yaml@main
     with:
-      contract: ${{ inputs.contract }}
-      address: ${{ inputs.address }}
-      networks: ${{ inputs.networks }}
+      contract: ${{ needs.resolve.outputs.contract }}
+      address: ${{ needs.resolve.outputs.address }}
+      networks: ${{ needs.resolve.outputs.networks }}
     secrets: inherit
