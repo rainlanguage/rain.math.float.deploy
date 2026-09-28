@@ -10,6 +10,10 @@ name: Manual sol verify
 # `Pending in queue` polls.
 #
 # Never broadcasts and takes no deploy key.
+#
+# The explorers are not named here. `rainix-manual-sol-verify` reads them from
+# this repo's own `[etherscan]`, the same set `testSupportedNetworksAreFullyConfigured`
+# holds to `LibRainDeploy.supportedNetworks()`.
 on:
   workflow_dispatch:
     inputs:
@@ -24,21 +28,16 @@ on:
           # code wrapping table BYTES, with no Solidity source an explorer could
           # match it against.
 jobs:
-  # The address and the explorer list are READ from the repo, never typed into
-  # this file. Both have a single source already — the committed snapshot and
-  # `[etherscan]` — and a copy here would be a value that silently goes stale:
-  # the address moves whenever the creation code does (it moved to
-  # 0xEc632ea4 this week), and a network added to `[rpc_endpoints]` and
-  # `[etherscan]` would simply never be submitted to.
-  #
-  # A workflow input cannot read either, which is why this is a job that runs
-  # before the verify rather than a `default:`.
+  # The address is READ from the committed snapshot, never typed into this file.
+  # It moves whenever the creation code does — it moved to 0xEc632ea4 this week
+  # — so a literal here would go stale silently and submit source against
+  # whatever used to be at it. A workflow input cannot read the snapshot, which
+  # is why this is a job rather than a `default:`.
   resolve:
     runs-on: ubuntu-latest
     outputs:
       contract: ${{ steps.pins.outputs.contract }}
       address: ${{ steps.pins.outputs.address }}
-      networks: ${{ steps.pins.outputs.networks }}
     steps:
       - uses: rainlanguage/rainix/.github/actions/checkout@main
       - id: pins
@@ -47,49 +46,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          # `|| true` on both reads: under `set -e` with `pipefail` a grep that
-          # matches nothing exits 1 and kills the step, so the empty checks below
-          # would never run and the operator would get a bare exit code instead of
-          # being told which read came back empty.
+          # `|| true` because under `set -e` with `pipefail` a grep that matches
+          # nothing exits 1 and kills the step, so the check below would never
+          # run and the operator would get a bare exit code instead of being told
+          # the snapshot had no address in it.
           snapshot="src/generated/candidate/$CONTRACT.sol"
           address="$(grep -oE 'DEPLOYED_ADDRESS = address\(0x[0-9a-fA-F]{40}\)' "$snapshot" \
             | grep -oE '0x[0-9a-fA-F]{40}' || true)"
 
-          # Scoped to the `[etherscan]` section: these are the explorers the repo
-          # is configured to submit to, and `testSupportedNetworksAreFullyConfigured`
-          # already fails the build when that set and
-          # `LibRainDeploy.supportedNetworks()` disagree. So this list cannot
-          # drift from the deploy's network list without CI saying so first.
-          #
-          # Chain IDs, not names. `--chain` takes either, but foundry has no name
-          # for HyperEVM (999) or Robinhood Chain (4663), and this repo's
-          # `base_sepolia` alias is rejected outright — foundry's name is
-          # `base-sepolia`. Every entry carries an explicit `chain`, so an ID
-          # resolves the right key and verifier URL for all of them.
-          networks="$(sed -n '/^\[etherscan\]/,/^\[/{/^\[/!p}' foundry.toml \
-            | grep -oE 'chain = [0-9]+' \
-            | grep -oE '[0-9]+' \
-            | tr '\n' ' ' || true)"
-
-          # A grep that matches nothing yields an empty string, and the verify
-          # below would then submit to no explorer and exit 0 having done
-          # nothing. Fail here instead, naming which read came back empty.
           if [ -z "$address" ]
           then
             echo "::error::no DEPLOYED_ADDRESS in $snapshot"
             exit 1
           fi
-          if [ -z "${networks// /}" ]
-          then
-            echo "::error::no [etherscan] entries with a chain id in foundry.toml"
-            exit 1
-          fi
 
-          echo "verifying $CONTRACT at $address on:$networks"
+          echo "verifying $CONTRACT at $address"
           {
             echo "contract=src/concrete/$CONTRACT.sol:$CONTRACT"
             echo "address=$address"
-            echo "networks=$networks"
           } >> "$GITHUB_OUTPUT"
   verify:
     needs: resolve
@@ -97,5 +71,4 @@ jobs:
     with:
       contract: ${{ needs.resolve.outputs.contract }}
       address: ${{ needs.resolve.outputs.address }}
-      networks: ${{ needs.resolve.outputs.networks }}
     secrets: inherit
