@@ -9,21 +9,34 @@ import {LibRainDeploySnapshot} from "rain-deploy-0.1.11/src/lib/LibRainDeploySna
 import {DeployCandidate} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
 
-/// @dev Committed path of the generated log tables. The `.pointers.sol` suffix
-/// is the one the deploy pins and importers reference. The file is pure
-/// log-table data with no contract instance behind it, so it carries no
-/// bytecode-hash constant and is written directly rather than through
+/// @dev Committed LEAF NAME of the generated log tables, under `recordRoot()`.
+///
+/// The directory is not spelled here. Every other write in this script takes it
+/// from `recordRoot()`, and spelling `src/generated` again would make this the
+/// one path upstream does not own: it would keep writing to the old place if
+/// `LIB_FS_ROOT` moved, and would ignore a `recordRoot()` override, which exists
+/// so `cutRelease()` can be exercised against a record other than the repo's own.
+///
+/// The leaf is what importers reference, so changing it is a downstream edit.
+/// It was `LogTables.pointers.sol` until this branch, which named the file after
+/// a payload it does not hold: there are no pointers in it, only five `bytes`
+/// constants of table data. The name came from the rainlang convention where
+/// `LibCodeGen.bytesConstantString` output IS function pointers, and followed
+/// the generator's usual payload rather than this one's.
+///
+/// The file is pure log-table data with no contract instance behind it, so it
+/// carries no bytecode-hash constant and is written directly rather than through
 /// `LibFs.buildFileForContract`, which heads every file it writes with the hash
 /// of an instance and reverts on the codeless `address(0)` this build has.
 ///
-/// It sits at the root of `src/generated/` rather than in a snapshot directory
+/// It sits at the root of the record rather than in a snapshot directory
 /// because it is not a deploy record: it holds the table BYTES, which are a
 /// pure function of `LibLogTable` and carry no address, code hash or tag. The
 /// deploy record of the data contract those bytes are wrapped in is
 /// `src/generated/candidate/LogTables.sol`, and only tag-shaped directories
 /// under this root are releases — a loose file here is one neither
 /// `frozenSnapshotPaths` nor `release-guard` reads as a snapshot.
-string constant GENERATED_LOG_TABLES = "src/generated/LogTables.pointers.sol";
+string constant GENERATED_LOG_TABLES_LEAF = "LogTables.bytes.sol";
 
 /// One contract's generated files: the rolling snapshot and the released-suites
 /// lib emitted from its record.
@@ -75,7 +88,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
         return names;
     }
 
-    /// Rewrites `src/generated/LogTables.pointers.sol` from `LibLogTable`.
+    /// Rewrites `src/generated/LogTables.bytes.sol` from `LibLogTable`.
     ///
     /// The bytes are a pure function of that library's mathematics, so this
     /// file is a single snapshot rather than a per-tag directory: there is no
@@ -84,7 +97,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
     function regenerateLogTables() internal {
         //forge-lint: disable-next-line(unsafe-cheatcode)
         vm.writeFile(
-            GENERATED_LOG_TABLES,
+            string.concat(recordRoot(), "/", GENERATED_LOG_TABLES_LEAF),
             string.concat(
                 LibCodeGen.filePrefix(),
                 LibCodeGen.bytesConstantString(
@@ -126,7 +139,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
     ///   a freeze copies whatever this hook leaves behind, so regenerating them
     ///   anywhere but here would let a release freeze a snapshot cut from stale
     ///   tables. They are written from `LibLogTable` while the snapshot below
-    ///   is cut from the COMPILED-IN `LogTables.pointers.sol`, so a run that
+    ///   is cut from the COMPILED-IN `LogTables.bytes.sol`, so a run that
     ///   actually moves the tables converges on the second run — which is what
     ///   the currency check in CI reports rather than hides.
     /// - `writeSnapshot` runs each creation code through the Zoltu factory to

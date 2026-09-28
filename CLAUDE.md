@@ -36,7 +36,7 @@ generated deploy records and the deploy scripts + tests. The pure math
   frozen `src/generated/<tag>/` snapshot; a normal PR never bumps it.
 - `DecimalFloat`'s constructor reverts unless the log tables are at their Zoltu
   address: tables deploy/build/broadcast FIRST, always.
-- `src/generated/LogTables.pointers.sol` is table BYTES (a pure function of
+- `src/generated/LogTables.bytes.sol` is table BYTES (a pure function of
   `LibLogTable`), not a deploy record — it stays at the generated root, never in
   a tag dir.
 

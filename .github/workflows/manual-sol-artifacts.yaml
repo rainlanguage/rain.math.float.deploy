@@ -1,9 +1,20 @@
 name: Manual sol artifacts
-# The on-chain deploy, human-dispatched, run BEFORE tagging a release. Two
-# suites, matching `script/Deploy.sol`'s DEPLOYMENT_SUITE switch: deploy the
-# log-tables data contract once per chain, then the DecimalFloat concrete (its
-# constructor reads the log tables at the Zoltu address). Never broadcasts on
-# merge.
+# The on-chain deploy, human-dispatched, run BEFORE tagging a release. Deploy
+# the log-tables data contract once per chain, then the DecimalFloat concrete
+# (its constructor reads the log tables at the Zoltu address). Never broadcasts
+# on merge.
+#
+# The `suite` input below is passed as DEPLOYMENT_SUITE. `script/Deploy.sol`
+# holds no switch on it — it is a declaration plus `RainDeployBroadcast`, and
+# upstream's `RainDeployBroadcast.run()` resolves the value through
+# `suiteByName` against the keys `src/abstract/DecimalFloatDeploySuites.sol`
+# declares. A mistyped key reports the valid ones from there.
+#
+# Those keys are hand-listed as `options` because a workflow input cannot read
+# them out of Solidity. They are the one place in this repo that restates the
+# declaration, so a suite added there needs a line added here; an unlisted suite
+# simply cannot be dispatched, which fails visibly rather than deploying the
+# wrong thing.
 on:
   workflow_dispatch:
     inputs:
