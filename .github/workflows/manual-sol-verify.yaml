@@ -1,0 +1,46 @@
+name: Manual sol verify
+# Explorer source verification for a contract ALREADY on chain, run by hand.
+#
+# `Manual sol artifacts` submits source only for what its own run broadcast, so
+# a deploy that lands and then loses the race with an explorer's indexer cannot
+# be repaired by re-dispatching it: the Zoltu deploy is deterministic and
+# therefore idempotent, the rerun broadcasts nothing, and `--verify` has nothing
+# to submit. That is what happened to `DecimalFloat` at
+# 0xEc632ea4D04A6D72F87E60FEb4C6B6813cda59bd on 2026-09-28 — deployed to all
+# nine networks, then `Not all (0 / 1) contracts were verified!` after forty
+# `Pending in queue` polls.
+#
+# Never broadcasts and takes no deploy key.
+on:
+  workflow_dispatch:
+    inputs:
+      contract:
+        description: "Fully qualified artifact path (path:Contract)"
+        required: true
+        type: choice
+        options:
+          - src/concrete/DecimalFloat.sol:DecimalFloat
+      address:
+        description: "Address to submit source for"
+        required: true
+        type: string
+        default: "0xEc632ea4D04A6D72F87E60FEb4C6B6813cda59bd"
+      networks:
+        description: "Whitespace separated forge verify-contract --chain values"
+        required: true
+        type: string
+        # Chain IDs rather than names. `--chain` takes either, but foundry has no
+        # name for HyperEVM (999) or Robinhood Chain (4663), and `base_sepolia`
+        # is this repo's `[rpc_endpoints]` alias which `--chain` rejects outright
+        # (its name is `base-sepolia`). Every `[etherscan]` entry carries an
+        # explicit `chain`, so an ID resolves the right key and verifier URL for
+        # all nine — including Robinhood, whose entry points at its Blockscout.
+        default: "42161 8453 84532 56 1 14 999 137 4663"
+jobs:
+  verify:
+    uses: rainlanguage/rainix/.github/workflows/rainix-manual-sol-verify.yaml@main
+    with:
+      contract: ${{ inputs.contract }}
+      address: ${{ inputs.address }}
+      networks: ${{ inputs.networks }}
+    secrets: inherit
