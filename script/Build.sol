@@ -17,10 +17,15 @@ import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites
 /// `LIB_FS_ROOT` moved, and would ignore a `recordRoot()` override, which exists
 /// so `cutRelease()` can be exercised against a record other than the repo's own.
 ///
-/// The `.pointers.sol` suffix
-/// is the one the deploy pins and importers reference. The file is pure
-/// log-table data with no contract instance behind it, so it carries no
-/// bytecode-hash constant and is written directly rather than through
+/// The leaf is what importers reference, so changing it is a downstream edit.
+/// It was `LogTables.pointers.sol` until this branch, which named the file after
+/// a payload it does not hold: there are no pointers in it, only five `bytes`
+/// constants of table data. The name came from the rainlang convention where
+/// `LibCodeGen.bytesConstantString` output IS function pointers, and followed
+/// the generator's usual payload rather than this one's.
+///
+/// The file is pure log-table data with no contract instance behind it, so it
+/// carries no bytecode-hash constant and is written directly rather than through
 /// `LibFs.buildFileForContract`, which heads every file it writes with the hash
 /// of an instance and reverts on the codeless `address(0)` this build has.
 ///
@@ -31,7 +36,7 @@ import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites
 /// `src/generated/candidate/LogTables.sol`, and only tag-shaped directories
 /// under this root are releases — a loose file here is one neither
 /// `frozenSnapshotPaths` nor `release-guard` reads as a snapshot.
-string constant GENERATED_LOG_TABLES_LEAF = "LogTables.pointers.sol";
+string constant GENERATED_LOG_TABLES_LEAF = "LogTables.bytes.sol";
 
 /// One contract's generated files: the rolling snapshot and the released-suites
 /// lib emitted from its record.
@@ -83,7 +88,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
         return names;
     }
 
-    /// Rewrites `src/generated/LogTables.pointers.sol` from `LibLogTable`.
+    /// Rewrites `src/generated/LogTables.bytes.sol` from `LibLogTable`.
     ///
     /// The bytes are a pure function of that library's mathematics, so this
     /// file is a single snapshot rather than a per-tag directory: there is no
@@ -134,7 +139,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
     ///   a freeze copies whatever this hook leaves behind, so regenerating them
     ///   anywhere but here would let a release freeze a snapshot cut from stale
     ///   tables. They are written from `LibLogTable` while the snapshot below
-    ///   is cut from the COMPILED-IN `LogTables.pointers.sol`, so a run that
+    ///   is cut from the COMPILED-IN `LogTables.bytes.sol`, so a run that
     ///   actually moves the tables converges on the second run — which is what
     ///   the currency check in CI reports rather than hides.
     /// - `writeSnapshot` runs each creation code through the Zoltu factory to

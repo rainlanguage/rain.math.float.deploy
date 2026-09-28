@@ -6,7 +6,7 @@ concrete `DecimalFloat` contract, the rolling `src/generated/candidate/`
 snapshots of its deterministic Zoltu deploy records (address, codehash, creation
 and runtime bytecode), the alias lib `src/lib/deploy/LibDecimalFloatDeploy.sol`
 over those pins, the generated log-tables bytes
-(`src/generated/LogTables.pointers.sol`), and the deploy scripts + tests.
+(`src/generated/LogTables.bytes.sol`), and the deploy scripts + tests.
 
 The **library** half — `LibDecimalFloat`, `LibDecimalFloatImplementation`,
 `LibFormatDecimalFloat`, `LibParseDecimalFloat`, `LibLogTable` and the errors —
@@ -33,7 +33,7 @@ consumers that need the deployed address, codehash or the deploy pins
   `checkLogTablesDeployed()`.
 - `src/lib/LibReleasedSuites.sol` (+ the per-contract `Lib*Released.sol`) — the
   generated record of every released suite. NEVER edit by hand.
-- `src/generated/LogTables.pointers.sol` — the AOT-compiled log/anti-log table
+- `src/generated/LogTables.bytes.sol` — the AOT-compiled log/anti-log table
   bytes, regenerated (not hand-written) by `script/Build.sol`. The bytes are a
   pure function of `LibLogTable`, so this snapshot is version-invariant. NEVER
   edit by hand.

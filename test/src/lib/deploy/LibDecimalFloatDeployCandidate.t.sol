@@ -37,7 +37,7 @@ import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
 contract LibDecimalFloatDeployCandidateTest is Test {
     /// SOURCE -> CANDIDATE, log tables: the candidate records the data-contract
     /// creation code this repo's own `combinedTables()` produces, so the pins
-    /// describe the tables in `src/generated/LogTables.pointers.sol` rather
+    /// describe the tables in `src/generated/LogTables.bytes.sol` rather
     /// than a stale payload.
     function testLogTablesCandidateCreationCodeMatchesSource() external pure {
         assertEq(

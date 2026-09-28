@@ -8,7 +8,7 @@ import {
     LOG_TABLES_SMALL_ALT,
     ANTI_LOG_TABLES,
     ANTI_LOG_TABLES_SMALL
-} from "../../generated/LogTables.pointers.sol";
+} from "../../generated/LogTables.bytes.sol";
 import {
     DEPLOYED_ADDRESS as LOG_TABLES_CANDIDATE_ADDRESS,
     BYTECODE_HASH as LOG_TABLES_CANDIDATE_HASH

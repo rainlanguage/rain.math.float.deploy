@@ -52,7 +52,7 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
     /// There is no Solidity contract behind it — the creation code is
     /// `LibDataContract`'s data-contract wrapper around the bytes
     /// `LibDecimalFloatDeploy.combinedTables()` concatenates out of
-    /// `src/generated/LogTables.pointers.sol` — so `sourceCreationCode` is that
+    /// `src/generated/LogTables.bytes.sol` — so `sourceCreationCode` is that
     /// same pure expression rather than a `type(X).creationCode`, and the
     /// artifact path is empty because there is no source file for an explorer
     /// to verify against.

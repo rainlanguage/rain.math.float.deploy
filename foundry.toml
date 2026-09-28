@@ -43,7 +43,7 @@ libs = ["dependencies"]
 
 # Write access is scoped to exactly the files `script/Build.sol` generates:
 # everything under `src/generated/` (the candidate snapshots, the frozen tag
-# dirs `cutRelease()` adds, `LogTables.pointers.sol`) and the three generated
+# dirs `cutRelease()` adds, `LogTables.bytes.sol`) and the three generated
 # released-suites libs in `src/lib/` — never hand-written source. It reads the
 # release version from this file when `cutRelease()` runs, and
 # `DecimalFloatDeploySnapshotTest`'s inherited frozen-record walk reads
