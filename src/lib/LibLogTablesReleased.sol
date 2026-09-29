@@ -22,6 +22,14 @@ import {
     DEPENDENCIES as LogTables_0_1_2_DEPENDENCIES
 } from "../generated/0_1_2/LogTables.sol";
 
+import {
+    DEPLOYED_ADDRESS as LogTables_0_1_3_DEPLOYED_ADDRESS,
+    BYTECODE_HASH as LogTables_0_1_3_BYTECODE_HASH,
+    CREATION_CODE as LogTables_0_1_3_CREATION_CODE,
+    RUNTIME_CODE as LogTables_0_1_3_RUNTIME_CODE,
+    DEPENDENCIES as LogTables_0_1_3_DEPENDENCIES
+} from "../generated/0_1_3/LogTables.sol";
+
 /// @title LibLogTablesReleased
 /// @notice Every frozen release of `LogTables`: one entry per file in
 /// the append-only `src/generated/<tag>/` record, in tag order.
@@ -42,7 +50,7 @@ library LibLogTablesReleased {
     /// Every frozen release, in tag order.
     /// @return The released suites.
     function releasedSuites() internal pure returns (DeploySuite[] memory) {
-        DeploySuite[] memory suites = new DeploySuite[](2);
+        DeploySuite[] memory suites = new DeploySuite[](3);
         suites[0] = DeploySuite({
             suite: "log-tables@0_1_1",
             creationCode: LogTables_0_1_1_CREATION_CODE,
@@ -60,6 +68,15 @@ library LibLogTablesReleased {
             storedRuntimeCode: LogTables_0_1_2_RUNTIME_CODE,
             artifactPath: "",
             dependencies: abi.decode(LogTables_0_1_2_DEPENDENCIES, (address[]))
+        });
+        suites[2] = DeploySuite({
+            suite: "log-tables@0_1_3",
+            creationCode: LogTables_0_1_3_CREATION_CODE,
+            storedDeployedAddress: LogTables_0_1_3_DEPLOYED_ADDRESS,
+            storedBytecodeHash: LogTables_0_1_3_BYTECODE_HASH,
+            storedRuntimeCode: LogTables_0_1_3_RUNTIME_CODE,
+            artifactPath: "",
+            dependencies: abi.decode(LogTables_0_1_3_DEPENDENCIES, (address[]))
         });
         return suites;
     }
