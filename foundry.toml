@@ -6,7 +6,7 @@
 name = "rain-math-float-deploy"
 # Deploy repo: a normal PR does not bump this; only a release moves it, in
 # lockstep with the frozen `src/generated/<tag>/` snapshot it names.
-version = "0.1.2"
+version = "0.1.3"
 
 [profile.default]
 src = 'src'
@@ -20,8 +20,8 @@ optimizer = true
 
 # CRITICAL: 1_000_000, NOT the 100_000 that rain.factory.deploy /
 # rain.extrospection.deploy use. `DecimalFloat`'s deterministic Zoltu address
-# (ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS = 0x799632d2…) and codehash
-# (DECIMAL_FLOAT_CONTRACT_HASH = 0xdc4688…) are a pure function of its creation
+# (ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS = 0xEc632ea4…) and codehash
+# (DECIMAL_FLOAT_CONTRACT_HASH = 0x0d43af49…) are a pure function of its creation
 # bytecode, which is a pure function of these settings AND the library sources
 # it compiles against (the `rain-math-float` package). These match the exact
 # settings the live deployment was produced with in the pre-split hybrid
