@@ -1,0 +1,61 @@
+name: Manual sol verify
+# Explorer source verification for a contract ALREADY on chain, run by hand.
+#
+# The deploy is deterministic and so idempotent: re-dispatching `Manual sol
+# artifacts` broadcasts nothing and leaves `--verify` nothing to submit, so a
+# deploy that lands and then fails verification needs this instead.
+#
+# Never broadcasts, takes no deploy key. Explorers come from `[etherscan]`, read
+# by rainix.
+on:
+  workflow_dispatch:
+    inputs:
+      contract:
+        description: "Contract to verify"
+        required: true
+        type: choice
+        options:
+          # The log tables have no Solidity source to match, being a data
+          # contract wrapping table bytes.
+          - DecimalFloat
+jobs:
+  # The address is read, not typed: it moves with the creation code, and a
+  # literal would submit source against whatever used to be at it. An input
+  # cannot read a file, hence a job.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      contract: ${{ steps.pins.outputs.contract }}
+      address: ${{ steps.pins.outputs.address }}
+    steps:
+      - uses: rainlanguage/rainix/.github/actions/checkout@main
+      - id: pins
+        env:
+          CONTRACT: ${{ inputs.contract }}
+        run: |
+          set -euo pipefail
+
+          # `|| true`: under pipefail a no-match grep exits 1 and would kill the
+          # step before the check below could say what was missing.
+          snapshot="src/generated/candidate/$CONTRACT.sol"
+          address="$(grep -oE 'DEPLOYED_ADDRESS = address\(0x[0-9a-fA-F]{40}\)' "$snapshot" \
+            | grep -oE '0x[0-9a-fA-F]{40}' || true)"
+
+          if [ -z "$address" ]
+          then
+            echo "::error::no DEPLOYED_ADDRESS in $snapshot"
+            exit 1
+          fi
+
+          echo "verifying $CONTRACT at $address"
+          {
+            echo "contract=src/concrete/$CONTRACT.sol:$CONTRACT"
+            echo "address=$address"
+          } >> "$GITHUB_OUTPUT"
+  verify:
+    needs: resolve
+    uses: rainlanguage/rainix/.github/workflows/rainix-manual-sol-verify.yaml@main
+    with:
+      contract: ${{ needs.resolve.outputs.contract }}
+      address: ${{ needs.resolve.outputs.address }}
+    secrets: inherit
