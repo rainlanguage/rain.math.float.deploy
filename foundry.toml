@@ -125,26 +125,11 @@ ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
 flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}", chain = 14 }
 hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 # Robinhood Chain (4663) is not indexed by Etherscan V2. Its Blockscout speaks
-# the Etherscan API, so the entry points there (the key is ignored). That
-# explorer sits behind a Cloudflare challenge and answers forge with a 403
-# interstitial, so `--verify` fails here and the repair is Sourcify, which does
-# support 4663.
-#
-# The key must be set and EMPTY. Unset, forge refuses to start — it resolves
-# every entry in this table before it honours `--verifier`, and errors on the
-# first name with no value. Set to anything, forge reports `ETHERSCAN_API_KEY
-# is set, defaulting to Etherscan verifier` and goes to Blockscout anyway,
-# `--verifier sourcify` notwithstanding. Empty is the only value that reaches
-# Sourcify:
-#
-#   CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY= \
-#   CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY=x ...every other key in this table... \
-#     forge verify-contract --verifier sourcify --chain 4663 <address> <path:Contract>
-#
-# Sourcify then tries to forward the result to Blockscout and Etherscan itself,
-# and both fail — 403 and a rate limit. That is cosmetic: its own record is the
-# verification, and `GET /v2/contract/4663/<address>` reporting `"match"` is
-# what to check afterwards.
+# the Etherscan API, so the entry points there (the key is ignored), but sits
+# behind a Cloudflare challenge that fails `--verify`. Repair through Sourcify
+# with this key set and EMPTY — unset, forge will not start; set, it ignores
+# `--verifier sourcify`. Sourcify's onward pushes then fail and do not matter;
+# `GET /v2/contract/4663/<address>` reporting `"match"` is the verification.
 robinhood = { key = "${CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY}", chain = 4663, url = "https://robinhoodchain.blockscout.com/api" }
 bsc = { key = "${CI_DEPLOY_BSC_ETHERSCAN_API_KEY}", chain = 56 }
 polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}", chain = 137 }
