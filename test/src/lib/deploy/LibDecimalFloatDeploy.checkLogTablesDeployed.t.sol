@@ -4,7 +4,7 @@ pragma solidity =0.8.25;
 
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
-import {LibDataContract} from "rain-datacontract-0.1.9/src/lib/LibDataContract.sol";
+import {LibDataContract} from "rain-datacontract-0.2.0/src/lib/LibDataContract.sol";
 import {LibRainDeploy} from "rain-deploy-0.1.11/src/lib/LibRainDeploy.sol";
 import {LogTablesNotDeployed} from "rain-math-float-0.2.4/src/error/ErrDecimalFloat.sol";
 
