@@ -3,7 +3,7 @@
 pragma solidity ^0.8.25;
 
 import {Vm} from "forge-std-1.16.2/src/Vm.sol";
-import {LibDataContract} from "rain-datacontract-0.1.9/src/lib/LibDataContract.sol";
+import {LibDataContract} from "rain-datacontract-0.2.0/src/lib/LibDataContract.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
 import {LibRainDeploy} from "rain-deploy-0.1.11/src/lib/LibRainDeploy.sol";
 
