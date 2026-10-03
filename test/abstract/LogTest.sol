@@ -4,7 +4,7 @@ pragma solidity =0.8.25;
 
 // Re-export console2 here for convenience.
 // forge-lint: disable-next-line(unused-import)
-import {Test, console2} from "forge-std-1.16.2/src/Test.sol";
+import {Test, console2} from "forge-std-1.17.0/src/Test.sol";
 import {LibDataContract} from "rain-datacontract-0.2.0/src/lib/LibDataContract.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
 import {LibEtchLogTables} from "script/lib/LibEtchLogTables.sol";

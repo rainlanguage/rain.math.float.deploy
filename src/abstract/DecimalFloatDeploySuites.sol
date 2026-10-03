@@ -70,8 +70,7 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
                 storedRuntimeCode: LOG_TABLES_RUNTIME_CODE_CANDIDATE,
                 artifactPath: "",
                 dependencies: new address[](0)
-            }),
-            sourceCreationCode: LibDataContract.contractCreationCode(LibDecimalFloatDeploy.combinedTables())
+            })
         });
     }
 
@@ -96,8 +95,7 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
                 storedRuntimeCode: DECIMAL_FLOAT_RUNTIME_CODE_CANDIDATE,
                 artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
                 dependencies: dependencies
-            }),
-            sourceCreationCode: type(DecimalFloat).creationCode
+            })
         });
     }
 }

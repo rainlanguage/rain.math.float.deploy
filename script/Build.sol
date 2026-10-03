@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {BuildScript} from "rain-deploy-0.1.11/src/abstract/BuildScript.sol";
-import {LibCodeGen} from "rain-sol-codegen-0.1.37/src/lib/LibCodeGen.sol";
+import {BuildScript} from "rain-deploy-0.1.12/src/abstract/BuildScript.sol";
+import {LibCodeGen} from "rain-sol-codegen-0.1.39/src/lib/LibCodeGen.sol";
 import {LibLogTable} from "rain-math-float-0.2.4/src/lib/table/LibLogTable.sol";
-import {LibRainDeploySnapshot} from "rain-deploy-0.1.11/src/lib/LibRainDeploySnapshot.sol";
+import {LibRainDeploySnapshot} from "rain-deploy-0.1.12/src/lib/LibRainDeploySnapshot.sol";
 import {DeployCandidate} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
 
@@ -44,9 +44,9 @@ struct GeneratedContract {
     /// Places the snapshot inside `src/generated/<dir>/` and names the
     /// generated released-suites lib.
     string contractName;
-    /// Snapshots are written from its `sourceCreationCode` and
-    /// `snapshot.dependencies`; the released lib takes its suite key and
-    /// artifact path from its `snapshot`.
+    /// Snapshots are written from the creation code its `snapshot.artifactPath`
+    /// currently compiles to, plus its `snapshot.dependencies`; the released lib
+    /// takes its suite key and artifact path from its `snapshot`.
     DeployCandidate candidate;
 }
 
@@ -157,7 +157,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
                 recordRoot(),
                 LibRainDeploySnapshot.CANDIDATE,
                 contracts[i].contractName,
-                contracts[i].candidate.sourceCreationCode,
+                vm.getCode(contracts[i].candidate.snapshot.artifactPath),
                 contracts[i].candidate.snapshot.dependencies
             );
         }
