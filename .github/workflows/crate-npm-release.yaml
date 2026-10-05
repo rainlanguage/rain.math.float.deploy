@@ -20,3 +20,8 @@ jobs:
       crate: rain-math-float
       npm-package: "@rainlanguage/float"
     secrets: inherit
+  release-float-macro-serde:
+    uses: rainlanguage/rainix/.github/workflows/rainix-autopublish.yaml@main
+    with:
+      crates: "rain-math-float-macro rain-math-float-serde"
+    secrets: inherit
