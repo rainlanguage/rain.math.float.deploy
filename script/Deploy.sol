@@ -7,13 +7,5 @@ import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites
 
 /// @title Deploy
 /// @notice The declaration plus `RainDeployBroadcast`; the `Manual sol
-/// artifacts` workflow dispatches the `log-tables` suite and then the
-/// `decimal-float` suite.
-///
-/// The order is enforced rather than remembered: `decimal-float` records the
-/// log-tables address as a dependency, and `LibRainDeploy` refuses to broadcast
-/// on any network where a dependency has no code. Nothing here plants the
-/// tables locally to get a simulation through — a chain without them is a chain
-/// this suite must not be deployed to, because `DecimalFloat`'s constructor
-/// reverts there.
+/// artifacts` workflow dispatches the `decimal-float` suite.
 contract Deploy is DecimalFloatDeploySuites, RainDeployBroadcast {}

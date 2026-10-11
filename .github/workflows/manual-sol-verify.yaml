@@ -15,8 +15,6 @@ on:
         required: true
         type: choice
         options:
-          # The log tables have no Solidity source to match, being a data
-          # contract wrapping table bytes.
           - DecimalFloat
 jobs:
   # The address is read, not typed: it moves with the creation code, and a

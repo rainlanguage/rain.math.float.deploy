@@ -12,8 +12,6 @@ use alloy::primitives::aliases::I224;
 pub mod error;
 mod evm;
 pub mod js_api;
-#[cfg(any(test, feature = "test-harness"))]
-pub mod tables;
 
 use error::DecimalFloatErrorSelector;
 pub use error::FloatError;

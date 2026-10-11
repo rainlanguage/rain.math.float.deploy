@@ -2,16 +2,15 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.22/src/lib/LibDecimalFloat.sol";
-import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
-import {LogTest} from "test/abstract/LogTest.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
 
-contract DecimalFloatPow10Test is LogTest {
+contract DecimalFloatPow10Test is Test {
     using LibDecimalFloat for Float;
 
-    function pow10External(Float a) external view returns (Float) {
-        return a.pow10(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function pow10External(Float a) external pure returns (Float) {
+        return a.pow10();
     }
 
     function testPow10Deployed(Float a) external {

@@ -3,190 +3,81 @@
 pragma solidity =0.8.25;
 
 import {BuildScript} from "rain-deploy-0.1.15/src/abstract/BuildScript.sol";
-import {LibCodeGen} from "rain-sol-codegen-0.1.39/src/lib/LibCodeGen.sol";
-import {LibLogTable} from "rain-math-float-0.2.22/src/lib/table/LibLogTable.sol";
 import {LibRainDeploySnapshot} from "rain-deploy-0.1.15/src/lib/LibRainDeploySnapshot.sol";
-import {DeployCandidate} from "../src/abstract/RainDeploySuitesBase.sol";
+import {DeployCandidate, DeploySuite} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
 
-/// @dev Committed LEAF NAME of the generated log tables, under `recordRoot()`.
-///
-/// The directory is not spelled here. Every other write in this script takes it
-/// from `recordRoot()`, and spelling `src/generated` again would make this the
-/// one path upstream does not own: it would keep writing to the old place if
-/// `LIB_FS_ROOT` moved, and would ignore a `recordRoot()` override, which exists
-/// so `cutRelease()` can be exercised against a record other than the repo's own.
-///
-/// The leaf is what importers reference, so changing it is a downstream edit.
-/// It was `LogTables.pointers.sol` until this branch, which named the file after
-/// a payload it does not hold: there are no pointers in it, only five `bytes`
-/// constants of table data. The name came from the rainlang convention where
-/// `LibCodeGen.bytesConstantString` output IS function pointers, and followed
-/// the generator's usual payload rather than this one's.
-///
-/// The file is pure log-table data with no contract instance behind it, so it
-/// carries no bytecode-hash constant and is written directly rather than through
-/// `LibFs.buildFileForContract`, which heads every file it writes with the hash
-/// of an instance and reverts on the codeless `address(0)` this build has.
-///
-/// It sits at the root of the record rather than in a snapshot directory
-/// because it is not a deploy record: it holds the table BYTES, which are a
-/// pure function of `LibLogTable` and carry no address, code hash or tag. The
-/// deploy record of the data contract those bytes are wrapped in is
-/// `src/generated/candidate/LogTables.sol`, and only tag-shaped directories
-/// under this root are releases — a loose file here is one neither
-/// `frozenSnapshotPaths` nor `release-guard` reads as a snapshot.
-string constant GENERATED_LOG_TABLES_LEAF = "LogTables.bytes.sol";
-
-/// One contract's generated files: the rolling snapshot and the released-suites
-/// lib emitted from its record.
-struct GeneratedContract {
-    /// Places the snapshot inside `src/generated/<dir>/` and names the
+/// One contract's released record: the released-suites lib emitted from its
+/// frozen snapshots.
+struct ReleasedContract {
+    /// Names the snapshot file inside each `src/generated/<tag>/` and the
     /// generated released-suites lib.
     string contractName;
-    /// The released lib takes its suite key and
-    /// artifact path from its `snapshot`.
-    DeployCandidate candidate;
-    /// The creation code its snapshot is written from, with
-    /// `candidate.snapshot.dependencies`. What `candidate.snapshot.artifactPath`
-    /// compiles to, or for a candidate with an `unanchorableReason`, the
-    /// expression that assembles it.
-    bytes sourceCreationCode;
+    /// The suite the released entries take their key and artifact path from.
+    DeploySuite template;
 }
 
 /// @title Build
-/// @notice Generates the deploy pins for every contract this repo deploys, plus
-/// the log-table bytes those pins are computed over. `generatedContracts()` is
-/// the only list, read by every hook below.
+/// @notice Generates the deploy pins for every contract this repo deploys.
 ///
-/// `run()` (what CI regenerates against) rewrites the log tables, the rolling
-/// `src/generated/candidate/` snapshots and the released-suites libs.
-/// `cutRelease()` freezes the candidates into `src/generated/<tag>/` first.
+/// `run()` (what CI regenerates against) rewrites the rolling
+/// `src/generated/candidate/` snapshot and the released-suites libs.
+/// `cutRelease()` freezes the candidate into `src/generated/<tag>/` first.
 /// Frozen snapshots are append-only historical records, never regenerated here.
 ///
+/// Two lists, because the record holds a contract this repo no longer builds.
+/// `snapshotContractNames()` is what is regenerated and frozen: `DecimalFloat`
+/// alone. `releasedContracts()` is what has a released-suites lib: that, plus
+/// the `LogTables` data contract frozen by the releases that shipped it, whose
+/// entries stay in `releasedSuites()` so every frozen snapshot stays released.
+///
 /// There is no generated alias lib. `src/lib/deploy/LibDecimalFloatDeploy.sol`
-/// is the stable import path over the candidate snapshots and it also carries
-/// hand-written logic — `combinedTables()` and `checkLogTablesDeployed()` — so
-/// it cannot be a file the generator overwrites. It aliases the snapshots by
-/// import instead, which is the same single source of truth by a different
-/// spelling, and `LibDecimalFloatDeployCandidateTest` pins that it still does.
+/// is the stable import path over the candidate snapshot and is hand-written,
+/// so it aliases the snapshot by import instead, which is the same single
+/// source of truth by a different spelling, and
+/// `LibDecimalFloatDeployCandidateTest` pins that it still does.
 contract Build is BuildScript, DecimalFloatDeploySuites {
-    /// Every contract this repo generates deploy pins for.
-    /// @return The generated contracts.
-    function generatedContracts() internal view returns (GeneratedContract[] memory) {
-        GeneratedContract[] memory contracts = new GeneratedContract[](2);
-        DeployCandidate memory decimalFloat = decimalFloatCandidate();
-        contracts[0] = GeneratedContract({
-            contractName: "LogTables", candidate: logTablesCandidate(), sourceCreationCode: logTablesCreationCode()
-        });
-        contracts[1] = GeneratedContract({
-            contractName: "DecimalFloat",
-            candidate: decimalFloat,
-            sourceCreationCode: vm.getCode(decimalFloat.snapshot.artifactPath)
-        });
+    /// Every contract with a released-suites lib, in the order the aggregate
+    /// emits its entries in.
+    /// @return The released contracts.
+    function releasedContracts() internal pure returns (ReleasedContract[] memory) {
+        ReleasedContract[] memory contracts = new ReleasedContract[](2);
+        contracts[0] = ReleasedContract({contractName: "LogTables", template: releasedLogTablesTemplate()});
+        contracts[1] = ReleasedContract({contractName: "DecimalFloat", template: decimalFloatCandidate().snapshot});
         return contracts;
     }
 
     /// @inheritdoc BuildScript
-    /// @dev In declaration order — the order the aggregate emits its entries
-    /// in.
-    function snapshotContractNames() internal view override returns (string[] memory) {
-        GeneratedContract[] memory contracts = generatedContracts();
-        string[] memory names = new string[](contracts.length);
-        for (uint256 i = 0; i < contracts.length; i++) {
-            names[i] = contracts[i].contractName;
-        }
+    function snapshotContractNames() internal pure override returns (string[] memory) {
+        string[] memory names = new string[](1);
+        names[0] = "DecimalFloat";
         return names;
     }
 
-    /// Rewrites `src/generated/LogTables.bytes.sol` from `LibLogTable`.
-    ///
-    /// The bytes are a pure function of that library's mathematics, so this
-    /// file is a single snapshot rather than a per-tag directory: there is no
-    /// version of it to freeze, only a currency check that the committed bytes
-    /// are the ones the pinned `rain-math-float` computes.
-    function regenerateLogTables() internal {
-        //forge-lint: disable-next-line(unsafe-cheatcode)
-        vm.writeFile(
-            string.concat(recordRoot(), "/", GENERATED_LOG_TABLES_LEAF),
-            string.concat(
-                LibCodeGen.filePrefix(),
-                LibCodeGen.bytesConstantString(
-                    vm, "/// @dev Log tables.", "LOG_TABLES", LibLogTable.toBytes(LibLogTable.logTableDec())
-                ),
-                LibCodeGen.bytesConstantString(
-                    vm,
-                    "/// @dev Log tables small.",
-                    "LOG_TABLES_SMALL",
-                    LibLogTable.toBytes(LibLogTable.logTableDecSmall())
-                ),
-                LibCodeGen.bytesConstantString(
-                    vm,
-                    "/// @dev Log tables small alt.",
-                    "LOG_TABLES_SMALL_ALT",
-                    LibLogTable.toBytes(LibLogTable.logTableDecSmallAlt())
-                ),
-                LibCodeGen.bytesConstantString(
-                    vm,
-                    "/// @dev Anti log tables.",
-                    "ANTI_LOG_TABLES",
-                    LibLogTable.toBytes(LibLogTable.antiLogTableDec())
-                ),
-                LibCodeGen.bytesConstantString(
-                    vm,
-                    "/// @dev Anti log tables small.",
-                    "ANTI_LOG_TABLES_SMALL",
-                    LibLogTable.toBytes(LibLogTable.antiLogTableDecSmall())
-                )
-            )
-        );
-    }
-
     /// @inheritdoc BuildScript
-    /// @dev The log tables are written first, and the log-tables snapshot
-    /// before the `DecimalFloat` one, because both orderings are load bearing:
-    ///
-    /// - The tables are what the log-tables data contract is built out of, and
-    ///   a freeze copies whatever this hook leaves behind, so regenerating them
-    ///   anywhere but here would let a release freeze a snapshot cut from stale
-    ///   tables. They are written from `LibLogTable` while the snapshot below
-    ///   is cut from the COMPILED-IN `LogTables.bytes.sol`, so a run that
-    ///   actually moves the tables converges on the second run — which is what
-    ///   the currency check in CI reports rather than hides.
-    /// - `writeSnapshot` runs each creation code through the Zoltu factory to
-    ///   read back its runtime code, and `DecimalFloat`'s constructor reverts
-    ///   unless the tables are already at their Zoltu address. Cutting the
-    ///   log-tables snapshot first puts them there, in this same VM, for the
-    ///   same reason a broadcast has to deploy `log-tables` first.
     function regenerateSnapshots() internal override {
-        regenerateLogTables();
-
-        GeneratedContract[] memory contracts = generatedContracts();
-        for (uint256 i = 0; i < contracts.length; i++) {
-            LibRainDeploySnapshot.writeSnapshot(
-                vm,
-                recordRoot(),
-                LibRainDeploySnapshot.CANDIDATE,
-                contracts[i].contractName,
-                contracts[i].sourceCreationCode,
-                contracts[i].candidate.snapshot.dependencies
-            );
-        }
+        DeployCandidate memory decimalFloat = decimalFloatCandidate();
+        LibRainDeploySnapshot.writeSnapshot(
+            vm,
+            recordRoot(),
+            LibRainDeploySnapshot.CANDIDATE,
+            "DecimalFloat",
+            vm.getCode(decimalFloat.snapshot.artifactPath),
+            decimalFloat.snapshot.dependencies
+        );
     }
 
     /// @inheritdoc BuildScript
     /// @dev Every released-suites lib and the aggregate over them.
     function regenerateLibs() internal override {
-        GeneratedContract[] memory contracts = generatedContracts();
+        ReleasedContract[] memory contracts = releasedContracts();
+        string[] memory names = new string[](contracts.length);
         for (uint256 i = 0; i < contracts.length; i++) {
             LibRainDeploySnapshot.writeReleasedSuitesLib(
-                vm,
-                LibRainDeploySnapshot.LIB_DIR,
-                recordRoot(),
-                contracts[i].contractName,
-                contracts[i].candidate.snapshot
+                vm, LibRainDeploySnapshot.LIB_DIR, recordRoot(), contracts[i].contractName, contracts[i].template
             );
+            names[i] = contracts[i].contractName;
         }
-        LibRainDeploySnapshot.writeReleasedSuitesAggregate(vm, LibRainDeploySnapshot.LIB_DIR, snapshotContractNames());
+        LibRainDeploySnapshot.writeReleasedSuitesAggregate(vm, LibRainDeploySnapshot.LIB_DIR, names);
     }
 }

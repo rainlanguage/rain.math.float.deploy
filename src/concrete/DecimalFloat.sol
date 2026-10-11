@@ -2,17 +2,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.22/src/lib/LibDecimalFloat.sol";
-import {LibDecimalFloatDeploy} from "../lib/deploy/LibDecimalFloatDeploy.sol";
-import {LibFormatDecimalFloat} from "rain-math-float-0.2.22/src/lib/format/LibFormatDecimalFloat.sol";
-import {LibParseDecimalFloat} from "rain-math-float-0.2.22/src/lib/parse/LibParseDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
+import {LibFormatDecimalFloat} from "rain-math-float-0.2.45/src/lib/format/LibFormatDecimalFloat.sol";
+import {LibParseDecimalFloat} from "rain-math-float-0.2.45/src/lib/parse/LibParseDecimalFloat.sol";
 
 contract DecimalFloat {
     using LibDecimalFloat for Float;
-
-    constructor() {
-        LibDecimalFloatDeploy.checkLogTablesDeployed();
-    }
 
     /// Exposes `LibDecimalFloat.FLOAT_MAX_POSITIVE_VALUE` for offchain use.
     /// @return The maximum positive value of a Float.
@@ -197,30 +192,30 @@ contract DecimalFloat {
     /// Exposes `LibDecimalFloat.pow10` for offchain use.
     /// @param a The exponent to raise 10 to.
     /// @return The result of 10^a.
-    function pow10(Float a) external view returns (Float) {
-        return a.pow10(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function pow10(Float a) external pure returns (Float) {
+        return a.pow10();
     }
 
     /// Exposes `LibDecimalFloat.log10` for offchain use.
     /// @param a The float to take the logarithm of.
     /// @return The logarithm of the float.
-    function log10(Float a) external view returns (Float) {
-        return a.log10(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function log10(Float a) external pure returns (Float) {
+        return a.log10();
     }
 
     /// Exposes `LibDecimalFloat.pow` for offchain use.
     /// @param a The base float.
     /// @param b The exponent float.
     /// @return The result of raising the base float to the power of the exponent
-    function pow(Float a, Float b) external view returns (Float) {
-        return a.pow(b, LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function pow(Float a, Float b) external pure returns (Float) {
+        return a.pow(b);
     }
 
     /// Exposes `LibDecimalFloat.sqrt` for offchain use.
     /// @param a The float to take the square root of.
     /// @return The square root of the float.
-    function sqrt(Float a) external view returns (Float) {
-        return a.sqrt(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function sqrt(Float a) external pure returns (Float) {
+        return a.sqrt();
     }
 
     /// Exposes `LibDecimalFloat.min` for offchain use.

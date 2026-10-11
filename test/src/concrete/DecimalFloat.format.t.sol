@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Float} from "rain-math-float-0.2.22/src/lib/LibDecimalFloat.sol";
-import {LogTest} from "test/abstract/LogTest.sol";
+import {Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
-import {LibFormatDecimalFloat} from "rain-math-float-0.2.22/src/lib/format/LibFormatDecimalFloat.sol";
+import {LibFormatDecimalFloat} from "rain-math-float-0.2.45/src/lib/format/LibFormatDecimalFloat.sol";
 
-contract DecimalFloatFormatTest is LogTest {
+contract DecimalFloatFormatTest is Test {
     function formatBoolExternal(Float a, bool scientific) external pure returns (string memory) {
         return LibFormatDecimalFloat.toDecimalString(a, scientific);
     }

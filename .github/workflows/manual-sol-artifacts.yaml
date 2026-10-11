@@ -1,8 +1,7 @@
 name: Manual sol artifacts
-# The on-chain deploy, human-dispatched, run BEFORE tagging a release. Deploy
-# the log-tables data contract once per chain, then the DecimalFloat concrete
-# (its constructor reads the log tables at the Zoltu address). Never broadcasts
-# on merge.
+# The on-chain deploy, human-dispatched, run BEFORE tagging a release. Deploys
+# the DecimalFloat concrete, or a frozen release onto a newly supported network.
+# Never broadcasts on merge.
 #
 # The `suite` input below is passed as DEPLOYMENT_SUITE. `script/Deploy.sol`
 # holds no switch on it — it is a declaration plus `RainDeployBroadcast`, and
@@ -23,7 +22,6 @@ on:
         required: true
         type: choice
         options:
-          - log-tables
           - decimal-float
           # Frozen releases: what a newly supported network needs, so the
           # addresses every consumer pins land there (the bare keys above
