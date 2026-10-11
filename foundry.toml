@@ -54,6 +54,9 @@ libs = ["dependencies"]
 # into `./crates/float/abi`; `test/script/CopyArtifacts.t.sol` reads them back.
 fs_permissions = [
   { access = "read", path = "./foundry.toml" },
+  { access = "read", path = "./.env.example" },
+  { access = "read-write", path = "./.staged-config" },
+  { access = "read", path = "./script/build.sh" },
   { access = "read-write", path = "./src/generated" },
   { access = "read-write", path = "./src/lib/LibLogTablesReleased.sol" },
   { access = "read-write", path = "./src/lib/LibDecimalFloatReleased.sol" },
@@ -90,16 +93,18 @@ recursive_deps = false
 # selects but this section does not name is not a skip: `vm.createSelectFork`
 # reverts with "invalid rpc url: <alias>" and takes the whole deploy down,
 # after it has already broadcast to the networks ahead of it in the list.
+# rain-deploy:generated:rpc_endpoints:begin
 [rpc_endpoints]
 arbitrum = "${ARBITRUM_RPC_URL}"
 base = "${BASE_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+bsc = "${BSC_RPC_URL}"
 ethereum = "${ETHEREUM_RPC_URL}"
 flare = "${FLARE_RPC_URL}"
 hyperevm = "${HYPEREVM_RPC_URL}"
-robinhood = "${ROBINHOOD_RPC_URL}"
-bsc = "${BSC_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
+robinhood = "${ROBINHOOD_RPC_URL}"
+# rain-deploy:generated:rpc_endpoints:end
 
 # `rainix-manual-sol-artifacts` passes `--verify` by default and exports exactly
 # these variable names, so a deploy without this section broadcasts and then
@@ -117,18 +122,21 @@ polygon = "${POLYGON_RPC_URL}"
 # The ids are verified rather than trusted: `testSupportedNetworkChainIdsAreBound`
 # forks each network and compares. `forge config` prints the resolved chain per
 # entry.
-[etherscan]
-arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}", chain = 42161 }
-base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}", chain = 8453 }
-base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}", chain = 84532 }
-ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
-flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}", chain = 14 }
-hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
+#
 # Robinhood Chain (4663) is not indexed by Etherscan V2. Its Blockscout speaks
 # the Etherscan API, so the entry points there (the key is ignored). That
 # explorer has rejected non-browser clients, so if `--verify` fails there,
 # verify afterwards through Sourcify: `forge verify-contract --verifier
 # sourcify --chain 4663 ...`.
-robinhood = { key = "${CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY}", chain = 4663, url = "https://robinhoodchain.blockscout.com/api" }
+# rain-deploy:generated:etherscan:begin
+[etherscan]
+arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}", chain = 42161 }
+base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}", chain = 8453 }
+base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}", chain = 84532 }
 bsc = { key = "${CI_DEPLOY_BSC_ETHERSCAN_API_KEY}", chain = 56 }
+ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
+flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}", chain = 14 }
+hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}", chain = 137 }
+robinhood = { key = "${CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY}", chain = 4663, url = "https://robinhoodchain.blockscout.com/api" }
+# rain-deploy:generated:etherscan:end

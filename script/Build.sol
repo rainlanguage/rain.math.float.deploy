@@ -44,10 +44,14 @@ struct GeneratedContract {
     /// Places the snapshot inside `src/generated/<dir>/` and names the
     /// generated released-suites lib.
     string contractName;
-    /// Snapshots are written from its `sourceCreationCode` and
-    /// `snapshot.dependencies`; the released lib takes its suite key and
+    /// The released lib takes its suite key and
     /// artifact path from its `snapshot`.
     DeployCandidate candidate;
+    /// The creation code its snapshot is written from, with
+    /// `candidate.snapshot.dependencies`. What `candidate.snapshot.artifactPath`
+    /// compiles to, or for a candidate with an `unanchorableReason`, the
+    /// expression that assembles it.
+    bytes sourceCreationCode;
 }
 
 /// @title Build
@@ -69,17 +73,24 @@ struct GeneratedContract {
 contract Build is BuildScript, DecimalFloatDeploySuites {
     /// Every contract this repo generates deploy pins for.
     /// @return The generated contracts.
-    function generatedContracts() internal pure returns (GeneratedContract[] memory) {
+    function generatedContracts() internal view returns (GeneratedContract[] memory) {
         GeneratedContract[] memory contracts = new GeneratedContract[](2);
-        contracts[0] = GeneratedContract({contractName: "LogTables", candidate: logTablesCandidate()});
-        contracts[1] = GeneratedContract({contractName: "DecimalFloat", candidate: decimalFloatCandidate()});
+        DeployCandidate memory decimalFloat = decimalFloatCandidate();
+        contracts[0] = GeneratedContract({
+            contractName: "LogTables", candidate: logTablesCandidate(), sourceCreationCode: logTablesCreationCode()
+        });
+        contracts[1] = GeneratedContract({
+            contractName: "DecimalFloat",
+            candidate: decimalFloat,
+            sourceCreationCode: vm.getCode(decimalFloat.snapshot.artifactPath)
+        });
         return contracts;
     }
 
     /// @inheritdoc BuildScript
     /// @dev In declaration order — the order the aggregate emits its entries
     /// in.
-    function snapshotContractNames() internal pure override returns (string[] memory) {
+    function snapshotContractNames() internal view override returns (string[] memory) {
         GeneratedContract[] memory contracts = generatedContracts();
         string[] memory names = new string[](contracts.length);
         for (uint256 i = 0; i < contracts.length; i++) {
@@ -157,7 +168,7 @@ contract Build is BuildScript, DecimalFloatDeploySuites {
                 recordRoot(),
                 LibRainDeploySnapshot.CANDIDATE,
                 contracts[i].contractName,
-                contracts[i].candidate.sourceCreationCode,
+                contracts[i].sourceCreationCode,
                 contracts[i].candidate.snapshot.dependencies
             );
         }

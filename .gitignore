@@ -10,3 +10,4 @@ dist
 temp
 node_modules
 .direnv
+.staged-config

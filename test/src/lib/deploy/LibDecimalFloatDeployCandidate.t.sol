@@ -3,7 +3,7 @@
 pragma solidity =0.8.25;
 
 import {Test} from "forge-std-1.17.0/src/Test.sol";
-import {LibRainDeploy} from "rain-deploy-0.1.15/src/lib/LibRainDeploy.sol";
+import {DeployDependency, LibRainDeploy} from "rain-deploy-0.1.15/src/lib/LibRainDeploy.sol";
 import {LibDataContract} from "rain-datacontract-0.2.0/src/lib/LibDataContract.sol";
 import {
     BYTECODE_HASH as LOG_TABLES_BYTECODE_HASH,
@@ -122,7 +122,7 @@ contract LibDecimalFloatDeployCandidateTest is Test {
     /// nothing has to be on a network before the log tables can be broadcast
     /// there and the recorded dependency list is empty.
     function testLogTablesCandidateHasNoDependencies() external pure {
-        address[] memory dependencies = abi.decode(LOG_TABLES_DEPENDENCIES, (address[]));
+        DeployDependency[] memory dependencies = abi.decode(LOG_TABLES_DEPENDENCIES, (DeployDependency[]));
         assertEq(dependencies.length, 0, "log tables candidate records unexpected deploy dependencies");
     }
 
@@ -131,10 +131,17 @@ contract LibDecimalFloatDeployCandidateTest is Test {
     /// precondition is frozen into the snapshot rather than left to the order
     /// somebody dispatches the two suites in.
     function testDecimalFloatCandidateDependsOnTheLogTables() external pure {
-        address[] memory dependencies = abi.decode(DECIMAL_FLOAT_DEPENDENCIES, (address[]));
+        DeployDependency[] memory dependencies = abi.decode(DECIMAL_FLOAT_DEPENDENCIES, (DeployDependency[]));
         assertEq(dependencies.length, 1, "decimal float candidate does not record exactly one dependency");
         assertEq(
-            dependencies[0], LOG_TABLES_DEPLOYED_ADDRESS, "decimal float candidate's dependency is not the log tables"
+            dependencies[0].deployedAddress,
+            LOG_TABLES_DEPLOYED_ADDRESS,
+            "decimal float candidate's dependency is not the log tables"
+        );
+        assertEq(
+            dependencies[0].runtimeCode,
+            LOG_TABLES_RUNTIME_CODE,
+            "decimal float candidate's dependency code is not the log tables runtime code"
         );
     }
 }

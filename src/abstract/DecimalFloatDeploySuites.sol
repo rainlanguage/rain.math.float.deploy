@@ -2,9 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.25;
 
-import {DeployCandidate, DeploySuite, RainDeploySuitesBase} from "./RainDeploySuitesBase.sol";
+import {DeployCandidate, DeployDependency, DeploySuite, RainDeploySuitesBase} from "./RainDeploySuitesBase.sol";
 import {LibDataContract} from "rain-datacontract-0.2.0/src/lib/LibDataContract.sol";
-import {DecimalFloat} from "../concrete/DecimalFloat.sol";
 import {
     CREATION_CODE as LOG_TABLES_CREATION_CODE_CANDIDATE,
     RUNTIME_CODE as LOG_TABLES_RUNTIME_CODE_CANDIDATE
@@ -49,13 +48,11 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
     /// lib from THIS candidate specifically, and naming it keeps the suite key,
     /// the artifact path and the dependency list spelled once.
     ///
-    /// There is no Solidity contract behind it — the creation code is
-    /// `LibDataContract`'s data-contract wrapper around the bytes
-    /// `LibDecimalFloatDeploy.combinedTables()` concatenates out of
-    /// `src/generated/LogTables.bytes.sol` — so `sourceCreationCode` is that
-    /// same pure expression rather than a `type(X).creationCode`, and the
-    /// artifact path is empty because there is no source file for an explorer
-    /// to verify against.
+    /// There is no Solidity contract behind it, so it declares an
+    /// `unanchorableReason` and the anchor check holds it to having no
+    /// artifact. Its artifact path names the file the tables are generated
+    /// into, which declares no contract. The creation code it is snapshotted
+    /// from is `logTablesCreationCode`.
     ///
     /// A data contract's runtime is data behind a `STOP`; it calls nothing and
     /// has no dependency that must already be deployed.
@@ -68,11 +65,20 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
                 storedDeployedAddress: LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS,
                 storedBytecodeHash: LibDecimalFloatDeploy.LOG_TABLES_DATA_CONTRACT_HASH,
                 storedRuntimeCode: LOG_TABLES_RUNTIME_CODE_CANDIDATE,
-                artifactPath: "",
-                dependencies: new address[](0)
+                artifactPath: "src/generated/LogTables.bytes.sol:LogTables",
+                dependencies: new DeployDependency[](0)
             }),
-            sourceCreationCode: LibDataContract.contractCreationCode(LibDecimalFloatDeploy.combinedTables())
+            unanchorableReason: "A data contract that LibDataContract assembles from the generated log tables; no compiler produces it."
         });
+    }
+
+    /// The creation code the log-tables snapshot is cut from:
+    /// `LibDataContract`'s data-contract wrapper around the bytes
+    /// `LibDecimalFloatDeploy.combinedTables()` concatenates out of
+    /// `src/generated/LogTables.bytes.sol`.
+    /// @return The creation code.
+    function logTablesCreationCode() internal pure returns (bytes memory) {
+        return LibDataContract.contractCreationCode(LibDecimalFloatDeploy.combinedTables());
     }
 
     /// This repo's rolling `DecimalFloat` candidate, named for the same reason
@@ -81,12 +87,16 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
     /// The log tables are a hard dependency rather than a convenience: the
     /// constructor calls `LibDecimalFloatDeploy.checkLogTablesDeployed()`, so
     /// broadcasting `decimal-float` onto a chain without them does not produce
-    /// a degraded deployment, it reverts. Recording the address here is what
-    /// makes `LibRainDeploy` refuse that chain before it broadcasts.
+    /// a degraded deployment, it reverts. Recording the address and runtime
+    /// code here is what makes `LibRainDeploy` refuse that chain before it
+    /// broadcasts.
     /// @return The candidate.
     function decimalFloatCandidate() internal pure returns (DeployCandidate memory) {
-        address[] memory dependencies = new address[](1);
-        dependencies[0] = LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS;
+        DeployDependency[] memory dependencies = new DeployDependency[](1);
+        dependencies[0] = DeployDependency({
+            deployedAddress: LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS,
+            runtimeCode: LOG_TABLES_RUNTIME_CODE_CANDIDATE
+        });
         return DeployCandidate({
             snapshot: DeploySuite({
                 suite: "decimal-float",
@@ -97,7 +107,7 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
                 artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
                 dependencies: dependencies
             }),
-            sourceCreationCode: type(DecimalFloat).creationCode
+            unanchorableReason: ""
         });
     }
 }
