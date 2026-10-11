@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LogTest} from "test/abstract/LogTest.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.4/src/lib/LibDecimalFloat.sol";
-import {FixedDecimalOverflow} from "rain-math-float-0.2.4/src/error/ErrDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
+import {FixedDecimalOverflow} from "rain-math-float-0.2.45/src/error/ErrDecimalFloat.sol";
 
-contract DecimalFloatToFixedDecimalLossyTest is LogTest {
+contract DecimalFloatToFixedDecimalLossyTest is Test {
     using LibDecimalFloat for Float;
 
     function toFixedDecimalLossyExternal(Float packed, uint8 decimals) external pure returns (uint256, bool) {

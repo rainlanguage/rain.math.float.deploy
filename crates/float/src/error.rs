@@ -40,7 +40,6 @@ pub enum FloatError {
 
 #[derive(Debug)]
 pub enum DecimalFloatErrorSelector {
-    CoefficientOverflow,
     ExponentOverflow,
     ExponentUnderflow,
     FixedDecimalOverflow,
@@ -56,9 +55,6 @@ impl DecimalFloatErrorSelector {
     /// `DecimalFloat` error that produced this selector.
     pub fn to_readable_msg(&self) -> &'static str {
         match self {
-            Self::CoefficientOverflow => {
-                "The number's coefficient is too large to fit in a Float (the signed coefficient exceeds the 224-bit range)."
-            }
             Self::ExponentOverflow => {
                 "The number is too large to represent as a Float (its exponent exceeds the maximum supported magnitude)."
             }
@@ -91,9 +87,6 @@ impl TryFrom<FixedBytes<4>> for DecimalFloatErrorSelector {
     fn try_from(error_selector: FixedBytes<4>) -> Result<Self, Self::Error> {
         let FixedBytes(bytes) = error_selector;
         match bytes {
-            <DecimalFloat::CoefficientOverflow as SolError>::SELECTOR => {
-                Ok(Self::CoefficientOverflow)
-            }
             <DecimalFloat::ExponentOverflow as SolError>::SELECTOR => Ok(Self::ExponentOverflow),
             <DecimalFloat::ExponentUnderflow as SolError>::SELECTOR => Ok(Self::ExponentUnderflow),
             <DecimalFloat::FixedDecimalOverflow as SolError>::SELECTOR => {
@@ -195,10 +188,6 @@ mod tests {
 
     #[test]
     fn test_decimal_float_error_selector_readable_msgs() {
-        assert_eq!(
-            DecimalFloatErrorSelector::CoefficientOverflow.to_readable_msg(),
-            "The number's coefficient is too large to fit in a Float (the signed coefficient exceeds the 224-bit range)."
-        );
         assert_eq!(
             DecimalFloatErrorSelector::ExponentOverflow.to_readable_msg(),
             "The number is too large to represent as a Float (its exponent exceeds the maximum supported magnitude)."

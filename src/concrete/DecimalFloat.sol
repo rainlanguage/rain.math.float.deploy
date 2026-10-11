@@ -2,28 +2,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.4/src/lib/LibDecimalFloat.sol";
-import {LibDecimalFloatDeploy} from "../lib/deploy/LibDecimalFloatDeploy.sol";
-import {LibFormatDecimalFloat} from "rain-math-float-0.2.4/src/lib/format/LibFormatDecimalFloat.sol";
-import {LibParseDecimalFloat} from "rain-math-float-0.2.4/src/lib/parse/LibParseDecimalFloat.sol";
-import {ScientificMinNotLessThanMax} from "rain-math-float-0.2.4/src/error/ErrDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
+import {LibFormatDecimalFloat} from "rain-math-float-0.2.45/src/lib/format/LibFormatDecimalFloat.sol";
+import {LibParseDecimalFloat} from "rain-math-float-0.2.45/src/lib/parse/LibParseDecimalFloat.sol";
 
 contract DecimalFloat {
     using LibDecimalFloat for Float;
-
-    /// The default minimum value for scientific formatting. 1e-4
-    // slither-disable-next-line too-many-digits
-    Float public constant FORMAT_DEFAULT_SCIENTIFIC_MIN =
-        Float.wrap(0xfffffffc00000000000000000000000000000000000000000000000000000001);
-
-    /// The default maximum value for scientific formatting. 1e9
-    // slither-disable-next-line too-many-digits
-    Float public constant FORMAT_DEFAULT_SCIENTIFIC_MAX =
-        Float.wrap(0x0000000900000000000000000000000000000000000000000000000000000001);
-
-    constructor() {
-        LibDecimalFloatDeploy.checkLogTablesDeployed();
-    }
 
     /// Exposes `LibDecimalFloat.FLOAT_MAX_POSITIVE_VALUE` for offchain use.
     /// @return The maximum positive value of a Float.
@@ -73,37 +57,12 @@ contract DecimalFloat {
     }
 
     /// Exposes `LibFormatDecimalFloat.toDecimalString` for offchain use.
-    /// @param a The float to format. The absolute value of `a` is used to
-    /// determine if scientific notation is used, this allows negative numbers to
-    /// be formatted consistently with their positive counterparts.
-    /// @param scientificMin The smallest number that won't be formatted in
-    /// scientific notation.
-    /// @param scientificMax The largest number that won't be formatted in
-    /// scientific notation.
-    /// @return The string representation of the float.
-    function format(Float a, Float scientificMin, Float scientificMax) public pure returns (string memory) {
-        if (!scientificMin.lt(scientificMax)) {
-            revert ScientificMinNotLessThanMax(scientificMin, scientificMax);
-        }
-        Float absA = a.abs();
-        return LibFormatDecimalFloat.toDecimalString(a, absA.lt(scientificMin) || absA.gt(scientificMax));
-    }
-
-    /// Exposes `LibFormatDecimalFloat.toDecimalString` for offchain use.
-    /// provides raw bool interface for custom scientific formatting.
+    /// The caller chooses whether the float formats in scientific notation.
     /// @param a The float to format.
     /// @param scientific Whether to format the float in scientific notation.
     /// @return The string representation of the float.
     function format(Float a, bool scientific) external pure returns (string memory) {
         return LibFormatDecimalFloat.toDecimalString(a, scientific);
-    }
-
-    /// Exposes `format(Float, Float, Float)` for offchain use.
-    /// Provides default scientific formatting.
-    /// @param a The float to format.
-    /// @return The string representation of the float.
-    function format(Float a) external pure returns (string memory) {
-        return format(a, FORMAT_DEFAULT_SCIENTIFIC_MIN, FORMAT_DEFAULT_SCIENTIFIC_MAX);
     }
 
     /// Exposes `LibDecimalFloat.add` for offchain use.
@@ -233,30 +192,30 @@ contract DecimalFloat {
     /// Exposes `LibDecimalFloat.pow10` for offchain use.
     /// @param a The exponent to raise 10 to.
     /// @return The result of 10^a.
-    function pow10(Float a) external view returns (Float) {
-        return a.pow10(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function pow10(Float a) external pure returns (Float) {
+        return a.pow10();
     }
 
     /// Exposes `LibDecimalFloat.log10` for offchain use.
     /// @param a The float to take the logarithm of.
     /// @return The logarithm of the float.
-    function log10(Float a) external view returns (Float) {
-        return a.log10(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function log10(Float a) external pure returns (Float) {
+        return a.log10();
     }
 
     /// Exposes `LibDecimalFloat.pow` for offchain use.
     /// @param a The base float.
     /// @param b The exponent float.
     /// @return The result of raising the base float to the power of the exponent
-    function pow(Float a, Float b) external view returns (Float) {
-        return a.pow(b, LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function pow(Float a, Float b) external pure returns (Float) {
+        return a.pow(b);
     }
 
     /// Exposes `LibDecimalFloat.sqrt` for offchain use.
     /// @param a The float to take the square root of.
     /// @return The square root of the float.
-    function sqrt(Float a) external view returns (Float) {
-        return a.sqrt(LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS);
+    function sqrt(Float a) external pure returns (Float) {
+        return a.sqrt();
     }
 
     /// Exposes `LibDecimalFloat.min` for offchain use.

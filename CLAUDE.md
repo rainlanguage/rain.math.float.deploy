@@ -8,7 +8,7 @@ deliberately absent (rainlanguage/rainix#298).
 
 The **deploy half** of `rain.math.float`: the concrete `DecimalFloat`, its
 generated deploy records and the deploy scripts + tests. The pure math
-(`LibDecimalFloat*`, `LibLogTable`, the errors) is NOT here — it arrives as the
+(`LibDecimalFloat*`, the errors) is NOT here — it arrives as the
 `rain-math-float` Soldeer package.
 
 ## Conventions an agent would get wrong
@@ -28,22 +28,19 @@ generated deploy records and the deploy scripts + tests. The pure math
 
 - `src/generated/candidate/` is the rolling record, rewritten by
   `script/Build.sol` and currency-checked by CI;
-  `src/lib/deploy/LibDecimalFloatDeploy.sol` aliases it and adds hand-written
-  helpers. `src/generated/<tag>/` snapshots are frozen: a release only ADDS one.
-  Never hand-edit generated files (`src/generated/`,
-  `src/lib/Lib*Released*.sol`).
+  `src/lib/deploy/LibDecimalFloatDeploy.sol` aliases it. `src/generated/<tag>/`
+  snapshots are frozen: a release only ADDS one. Never hand-edit generated files
+  (`src/generated/`, `src/lib/Lib*Released*.sol`).
 - `[external.package].version` moves only in a release cut, in lockstep with the
   frozen `src/generated/<tag>/` snapshot; a normal PR never bumps it.
-- `DecimalFloat`'s constructor reverts unless the log tables are at their Zoltu
-  address: tables deploy/build/broadcast FIRST, always.
-- `src/generated/LogTables.bytes.sol` is table BYTES (a pure function of
-  `LibLogTable`), not a deploy record — it stays at the generated root, never in
-  a tag dir.
+- `rain-math-float` >= 0.2.45 has no log tables. `DecimalFloat` depends on
+  nothing; the `log-tables@<tag>` suites exist only as frozen releases. Never
+  add a log-tables candidate.
 
 ## Release / deploy shape
 
 - The on-chain deploy is a human-dispatched `Manual sol artifacts` run, BEFORE
-  tagging, never on merge: `log-tables` then `decimal-float`.
+  tagging, never on merge: `decimal-float`.
 - A manual `sol-v*` tag is the sole Soldeer release trigger
   (`rainix-tag-release`); the Rust crate + npm wrapper publish on merge instead
   (`crate-npm-release.yaml`). See README.md.

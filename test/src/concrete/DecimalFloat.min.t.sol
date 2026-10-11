@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.4/src/lib/LibDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
-import {LogTest} from "test/abstract/LogTest.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 
-contract DecimalFloatMinTest is LogTest {
+contract DecimalFloatMinTest is Test {
     using LibDecimalFloat for Float;
 
     function minExternal(Float a, Float b) external pure returns (Float) {
