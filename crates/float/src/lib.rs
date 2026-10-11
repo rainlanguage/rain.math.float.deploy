@@ -76,7 +76,7 @@ impl Float {
     /// let value = U256::from(12345u64);
     /// let decimals = 2u8;
     /// let float = Float::from_fixed_decimal(value, decimals)?;
-    /// assert_eq!(float.format()?, "123.45");
+    /// assert_eq!(float.format_with_scientific(false)?, "123.45");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -147,7 +147,7 @@ impl Float {
     /// let value = U256::from(12345u64);
     /// let decimals = 2u8;
     /// let (float, lossless) = Float::from_fixed_decimal_lossy(value, decimals)?;
-    /// assert_eq!(float.format()?, "123.45");
+    /// assert_eq!(float.format_with_scientific(false)?, "123.45");
     /// assert!(lossless);
     ///
     /// anyhow::Ok(())
@@ -220,7 +220,7 @@ impl Float {
     /// let coefficient = I224::from_str("314")?;
     /// let exponent = -2;
     /// let float = Float::pack_lossless(coefficient, exponent)?;
-    /// assert_eq!(float.format()?, "3.14");
+    /// assert_eq!(float.format_with_scientific(false)?, "3.14");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -280,7 +280,7 @@ impl Float {
     /// use rain_math_float::Float;
     ///
     /// let float = Float::parse("3.1415".to_string())?;
-    /// assert_eq!(float.format()?, "3.1415");
+    /// assert_eq!(float.format_with_scientific(false)?, "3.1415");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -487,7 +487,7 @@ impl Float {
     ///
     /// let zero = Float::zero()?;
     /// assert!(zero.is_zero()?);
-    /// assert_eq!(zero.format()?, "0");
+    /// assert_eq!(zero.format_with_scientific(false)?, "0");
     ///
     /// // Should be equal to parsed zero
     /// let parsed_zero = Float::parse("0".to_string())?;
@@ -501,119 +501,6 @@ impl Float {
         execute_call(Bytes::from(calldata), |output| {
             let decoded = DecimalFloat::zeroCall::abi_decode_returns(output.as_ref())?;
             Ok(Float(decoded))
-        })
-    }
-
-    /// Returns the default minimum value for scientific notation formatting (1e-4).
-    ///
-    /// Values smaller than this (in absolute value) will be formatted in scientific notation.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(Float)` - The default minimum (1e-4).
-    /// * `Err(FloatError)` - If the EVM call fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rain_math_float::Float;
-    ///
-    /// let min = Float::format_default_scientific_min()?;
-    /// assert_eq!(min.format()?, "0.0001");
-    ///
-    /// anyhow::Ok(())
-    /// ```
-    pub fn format_default_scientific_min() -> Result<Self, FloatError> {
-        let calldata = DecimalFloat::FORMAT_DEFAULT_SCIENTIFIC_MINCall {}.abi_encode();
-
-        execute_call(Bytes::from(calldata), |output| {
-            let decoded = DecimalFloat::FORMAT_DEFAULT_SCIENTIFIC_MINCall::abi_decode_returns(
-                output.as_ref(),
-            )?;
-            Ok(Float(decoded))
-        })
-    }
-
-    /// Returns the default maximum value for scientific notation formatting (1e9).
-    ///
-    /// Values larger than this (in absolute value) will be formatted in scientific notation.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(Float)` - The default maximum (1e9).
-    /// * `Err(FloatError)` - If the EVM call fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rain_math_float::Float;
-    ///
-    /// let max = Float::format_default_scientific_max()?;
-    /// assert_eq!(max.format()?, "1000000000");
-    ///
-    /// anyhow::Ok(())
-    /// ```
-    pub fn format_default_scientific_max() -> Result<Self, FloatError> {
-        let calldata = DecimalFloat::FORMAT_DEFAULT_SCIENTIFIC_MAXCall {}.abi_encode();
-
-        execute_call(Bytes::from(calldata), |output| {
-            let decoded = DecimalFloat::FORMAT_DEFAULT_SCIENTIFIC_MAXCall::abi_decode_returns(
-                output.as_ref(),
-            )?;
-            Ok(Float(decoded))
-        })
-    }
-
-    /// Formats the float as a decimal string using default scientific notation range (1e-4 to 1e9).
-    ///
-    /// Values within the range [1e-4, 1e9] will use decimal notation.
-    /// Values outside this range will use scientific notation.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(String)` - The formatted string.
-    /// * `Err(FloatError)` - If formatting fails.
-    ///
-    /// # Examples
-    ///
-    /// Values within the default range use decimal notation:
-    /// ```
-    /// use rain_math_float::Float;
-    ///
-    /// // At the boundaries (inclusive)
-    /// assert_eq!(Float::parse("0.0001".to_string())?.format()?, "0.0001");  // 1e-4
-    /// assert_eq!(Float::parse("1000000000".to_string())?.format()?, "1000000000");  // 1e9
-    ///
-    /// // Within range
-    /// assert_eq!(Float::parse("2.5".to_string())?.format()?, "2.5");
-    /// assert_eq!(Float::parse("123.456".to_string())?.format()?, "123.456");
-    /// assert_eq!(Float::parse("0.001".to_string())?.format()?, "0.001");
-    /// assert_eq!(Float::parse("1000000".to_string())?.format()?, "1000000");
-    ///
-    /// anyhow::Ok(())
-    /// ```
-    ///
-    /// Values outside the default range use scientific notation:
-    /// ```
-    /// use rain_math_float::Float;
-    ///
-    /// // Smaller than 1e-4
-    /// assert_eq!(Float::parse("0.00001".to_string())?.format()?, "1e-5");
-    /// assert_eq!(Float::parse("0.000001".to_string())?.format()?, "1e-6");
-    ///
-    /// // Larger than 1e9
-    /// assert_eq!(Float::parse("10000000000".to_string())?.format()?, "1e10");
-    /// assert_eq!(Float::parse("123000000000".to_string())?.format()?, "1.23e11");
-    ///
-    /// anyhow::Ok(())
-    /// ```
-    pub fn format(self) -> Result<String, FloatError> {
-        let Float(a) = self;
-        let calldata = DecimalFloat::format_1Call { a }.abi_encode();
-
-        execute_call(Bytes::from(calldata), |output| {
-            let decoded = DecimalFloat::format_1Call::abi_decode_returns(output.as_ref())?;
-            Ok(decoded)
         })
     }
 
@@ -641,55 +528,10 @@ impl Float {
     /// ```
     pub fn format_with_scientific(self, scientific: bool) -> Result<String, FloatError> {
         let Float(a) = self;
-        let calldata = DecimalFloat::format_0Call { a, scientific }.abi_encode();
+        let calldata = DecimalFloat::formatCall { a, scientific }.abi_encode();
 
         execute_call(Bytes::from(calldata), |output| {
-            let decoded = DecimalFloat::format_0Call::abi_decode_returns(output.as_ref())?;
-            Ok(decoded)
-        })
-    }
-
-    /// Formats the float as a decimal string with a custom scientific notation range.
-    ///
-    /// # Arguments
-    ///
-    /// * `scientific_min` - Values smaller than this (in absolute value) use scientific notation.
-    /// * `scientific_max` - Values larger than this (in absolute value) use scientific notation.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(String)` - The formatted string.
-    /// * `Err(FloatError)` - If formatting fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rain_math_float::Float;
-    ///
-    /// let float = Float::parse("0.001".to_string())?;
-    /// let min = Float::parse("0.01".to_string())?;
-    /// let max = Float::parse("100".to_string())?;
-    /// assert_eq!(float.format_with_range(min, max)?, "1e-3");
-    ///
-    /// anyhow::Ok(())
-    /// ```
-    pub fn format_with_range(
-        self,
-        scientific_min: Self,
-        scientific_max: Self,
-    ) -> Result<String, FloatError> {
-        let Float(a) = self;
-        let Float(scientific_min_inner) = scientific_min;
-        let Float(scientific_max_inner) = scientific_max;
-        let calldata = DecimalFloat::format_2Call {
-            a,
-            scientificMin: scientific_min_inner,
-            scientificMax: scientific_max_inner,
-        }
-        .abi_encode();
-
-        execute_call(Bytes::from(calldata), |output| {
-            let decoded = DecimalFloat::format_2Call::abi_decode_returns(output.as_ref())?;
+            let decoded = DecimalFloat::formatCall::abi_decode_returns(output.as_ref())?;
             Ok(decoded)
         })
     }
@@ -810,7 +652,7 @@ impl Float {
     ///
     /// let x = Float::parse("2.0".to_string())?;
     /// let inv = x.inv()?;
-    /// assert!(inv.format()?.starts_with("0.5"));
+    /// assert!(inv.format_with_scientific(false)?.starts_with("0.5"));
     ///
     /// anyhow::Ok(())
     /// ```
@@ -838,7 +680,7 @@ impl Float {
     ///
     /// let x = Float::parse("-3.14".to_string())?;
     /// let abs = x.abs()?;
-    /// assert_eq!(abs.format()?, "3.14");
+    /// assert_eq!(abs.format_with_scientific(false)?, "3.14");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -939,7 +781,7 @@ impl Add for Float {
     /// let a = Float::parse("1.5".to_string())?;
     /// let b = Float::parse("2.5".to_string())?;
     /// let sum = (a + b)?;
-    /// assert_eq!(sum.format()?, "4");
+    /// assert_eq!(sum.format_with_scientific(false)?, "4");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -973,7 +815,7 @@ impl Sub for Float {
     /// let a = Float::parse("5.0".to_string())?;
     /// let b = Float::parse("2.0".to_string())?;
     /// let diff = (a - b)?;
-    /// assert_eq!(diff.format()?, "3");
+    /// assert_eq!(diff.format_with_scientific(false)?, "3");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1007,7 +849,7 @@ impl Mul for Float {
     /// let a = Float::parse("2.0".to_string())?;
     /// let b = Float::parse("3.0".to_string())?;
     /// let product = (a * b)?;
-    /// assert_eq!(product.format()?, "6");
+    /// assert_eq!(product.format_with_scientific(false)?, "6");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1041,7 +883,7 @@ impl Div for Float {
     /// let a = Float::parse("6.0".to_string())?;
     /// let b = Float::parse("2.0".to_string())?;
     /// let quotient = (a / b)?;
-    /// assert_eq!(quotient.format()?, "3");
+    /// assert_eq!(quotient.format_with_scientific(false)?, "3");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1072,11 +914,11 @@ impl Float {
     ///
     /// let x = Float::parse("3.75".to_string())?;
     /// let int = x.integer()?;
-    /// assert_eq!(int.format()?, "3");
+    /// assert_eq!(int.format_with_scientific(false)?, "3");
     ///
     /// let y = Float::parse("-3.75".to_string())?;
     /// let int_y = y.integer()?;
-    /// assert_eq!(int_y.format()?, "-3");
+    /// assert_eq!(int_y.format_with_scientific(false)?, "-3");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1104,7 +946,7 @@ impl Float {
     ///
     /// let x = Float::parse("3.75".to_string())?;
     /// let frac = x.frac()?;
-    /// assert_eq!(frac.format()?, "0.75");
+    /// assert_eq!(frac.format_with_scientific(false)?, "0.75");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1132,7 +974,7 @@ impl Float {
     ///
     /// let x = Float::parse("3.75".to_string())?;
     /// let floor = x.floor()?;
-    /// assert_eq!(floor.format()?, "3");
+    /// assert_eq!(floor.format_with_scientific(false)?, "3");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1165,7 +1007,7 @@ impl Float {
     /// let a = Float::parse("1.0".to_string())?;
     /// let b = Float::parse("2.0".to_string())?;
     /// let min = a.min(b)?;
-    /// assert_eq!(min.format()?, "1");
+    /// assert_eq!(min.format_with_scientific(false)?, "1");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1199,7 +1041,7 @@ impl Float {
     /// let a = Float::parse("1.0".to_string())?;
     /// let b = Float::parse("2.0".to_string())?;
     /// let max = a.max(b)?;
-    /// assert_eq!(max.format()?, "2");
+    /// assert_eq!(max.format_with_scientific(false)?, "2");
     ///
     /// anyhow::Ok(())
     /// ```
@@ -1262,7 +1104,7 @@ impl Neg for Float {
     ///
     /// let x = Float::parse("3.14".to_string())?;
     /// let neg = (-x)?;
-    /// assert_eq!(neg.format()?, "-3.14");
+    /// assert_eq!(neg.format_with_scientific(false)?, "-3.14");
     ///
     /// anyhow::Ok(())
     /// ```
