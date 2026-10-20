@@ -38,8 +38,9 @@ that need the deployed address, codehash or the deploy pins
 ## Conventions
 
 - Concrete, scripts and tests pin `=0.8.25`; the shipped deploy lib floats
-  `^0.8.25`. Optimizer on at **1,000,000 runs** (see `foundry.toml`) — this is
-  what the live deployment used, and the pins move if it changes.
+  `^0.8.25`. `via_ir` with the optimizer at **399 runs** (see `foundry.toml`),
+  the highest count that keeps `DecimalFloat` under EIP-170; the pins move if it
+  changes.
 - Cancun, no CBOR metadata. Soldeer deps carry the version in the import path;
   `recursive_deps` is off, so every transitively reached package is declared.
 

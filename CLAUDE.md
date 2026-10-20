@@ -13,10 +13,11 @@ generated deploy records and the deploy scripts + tests. The pure math
 
 ## Conventions an agent would get wrong
 
-- Optimizer **1,000,000 runs**, NOT the 100,000 sibling deploy repos use.
-  Deterministic (Zoltu) deploy: the address is a pure function of the creation
-  bytecode, so this, solc `=0.8.25`, `evm_version = "cancun"`, no CBOR metadata,
-  and the pinned `rain-math-float` sources all move the pins if changed.
+- `via_ir` at **399 runs**: the highest count keeping `DecimalFloat` 256 bytes
+  under EIP-170. Deterministic (Zoltu) deploy: the address is a pure function of
+  the creation bytecode, so this, solc `=0.8.25`, `evm_version = "cancun"`, no
+  CBOR metadata, and the pinned `rain-math-float` sources all move the pins if
+  changed.
 - Pragma: concretes, scripts and tests pin `=0.8.25`; shipped libs and generated
   files float `^0.8.25`.
 - All source files carry SPDX headers (LicenseRef-DCL-1.0).
