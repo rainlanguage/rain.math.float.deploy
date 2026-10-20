@@ -12,7 +12,6 @@ import {
     DEPENDENCIES as DECIMAL_FLOAT_DEPENDENCIES
 } from "src/generated/candidate/DecimalFloat.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
-import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
 
 /// @title LibDecimalFloatDeployCandidateTest
 /// @notice The rolling `src/generated/candidate/` snapshot and the
@@ -27,11 +26,12 @@ import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
 /// its pins — this is what says they are still the candidate's.
 contract LibDecimalFloatDeployCandidateTest is Test {
     /// SOURCE -> CANDIDATE: the candidate records THIS repo's current
-    /// `DecimalFloat` creation code.
-    function testDecimalFloatCandidateCreationCodeMatchesSource() external pure {
+    /// `DecimalFloat` creation code. Read from the artifact: importing the
+    /// contract would compile this file `via_ir`, which segfaults solc.
+    function testDecimalFloatCandidateCreationCodeMatchesSource() external view {
         assertEq(
             DECIMAL_FLOAT_CREATION_CODE,
-            type(DecimalFloat).creationCode,
+            vm.getCode("DecimalFloat.sol:DecimalFloat"),
             "decimal float candidate creation code is not current source"
         );
     }
