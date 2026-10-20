@@ -18,13 +18,21 @@ out = 'out'
 solc = "0.8.25"
 optimizer = true
 
-# `via_ir` at 399 runs: the highest run count that keeps `DecimalFloat`'s
-# runtime code at least 256 bytes under EIP-170 (`DecimalFloatRuntimeSizeTest`
-# pins the limit). `DecimalFloat`'s Zoltu address and code hash are a pure
-# function of its creation bytecode, so changing any of these settings
+optimizer_runs = 1000000
+
+# `DecimalFloat` alone compiles `via_ir` at 399 runs: the highest run count that
+# keeps its runtime code at least 256 bytes under EIP-170
+# (`DecimalFloatRuntimeSizeTest` pins the limit). The rain-deploy scripts and
+# tests cannot compile `via_ir` ("Could not create stack layout"), so the
+# default profile stays legacy. `DecimalFloat`'s Zoltu address and code hash
+# are a pure function of its creation bytecode, so changing this profile
 # regenerates the `src/generated/candidate/` pins at a different address.
-via_ir = true
-optimizer_runs = 399
+additional_compiler_profiles = [
+  { name = "decimal-float", via_ir = true, optimizer_runs = 399 },
+]
+compilation_restrictions = [
+  { paths = "src/concrete/DecimalFloat.sol", via_ir = true, min_optimizer_runs = 399, max_optimizer_runs = 399 },
+]
 
 evm_version = "cancun"
 
