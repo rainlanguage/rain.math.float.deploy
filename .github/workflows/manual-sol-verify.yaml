@@ -52,7 +52,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
   verify:
     needs: resolve
-    uses: rainlanguage/rainix/.github/workflows/rainix-manual-sol-verify.yaml@main
+    uses: rainlanguage/rainix/.github/workflows/rainix-manual-sol-verify.yaml@04624f145481e6853c924d0c3d6a840bd1e6f88f
     with:
       contract: ${{ needs.resolve.outputs.contract }}
       address: ${{ needs.resolve.outputs.address }}
