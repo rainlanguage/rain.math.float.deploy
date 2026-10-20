@@ -69,14 +69,15 @@ fs_permissions = [
 runs = 2048
 
 # `recursive_deps` is off, so every package an import resolves through is
-# declared here, including the one reached only transitively through
-# `rain-math-float` (`LibParseDecimalFloat` → `rain-string`).
+# declared here, including the ones reached only transitively through
+# `rain-math-float` (`LibParseDecimalFloat` → `rain-string`, `rain-solmem`).
 [dependencies]
 forge-std = "1.17.0"
 "rain-string" = "0.3.9"
-"rain-deploy" = "0.1.15"
+"rain-solmem" = "0.1.28"
+"rain-deploy" = "0.1.18"
 "rain-sol-codegen" = "0.1.39"
-"rain-math-float" = "0.2.45"
+"rain-math-float" = "0.3.10"
 
 [soldeer]
 recursive_deps = false

@@ -4,7 +4,7 @@ pragma solidity =0.8.25;
 
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {TestDecimalFloat} from "./TestDecimalFloat.sol";
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.45/src/lib/LibDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.3.10/src/lib/LibDecimalFloat.sol";
 
 contract DecimalFloatPackLosslessTest is Test {
     function packLosslessExternal(int224 signedCoefficient, int32 exponent) external pure returns (Float) {
