@@ -34,3 +34,4 @@ CLAUDE.md
 /node_modules
 /target
 /temp
+.env.example
