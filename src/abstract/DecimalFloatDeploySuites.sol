@@ -2,7 +2,13 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.25;
 
-import {DeployCandidate, DeployDependency, DeploySuite, RainDeploySuitesBase} from "./RainDeploySuitesBase.sol";
+import {
+    DeployCandidate,
+    DeployDependency,
+    DeployMechanism,
+    DeploySuite,
+    RainDeploySuitesBase
+} from "./RainDeploySuitesBase.sol";
 import {
     CREATION_CODE as DECIMAL_FLOAT_CREATION_CODE_CANDIDATE,
     RUNTIME_CODE as DECIMAL_FLOAT_RUNTIME_CODE_CANDIDATE
@@ -55,7 +61,9 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
                 storedBytecodeHash: LibDecimalFloatDeploy.DECIMAL_FLOAT_CONTRACT_HASH,
                 storedRuntimeCode: DECIMAL_FLOAT_RUNTIME_CODE_CANDIDATE,
                 artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
-                dependencies: new DeployDependency[](0)
+                dependencies: new DeployDependency[](0),
+                mechanism: DeployMechanism.Zoltu,
+                mechanismData: ""
             }),
             unanchorableReason: ""
         });
@@ -77,7 +85,9 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
             storedBytecodeHash: bytes32(0),
             storedRuntimeCode: "",
             artifactPath: "src/generated/LogTables.bytes.sol:LogTables",
-            dependencies: new DeployDependency[](0)
+            dependencies: new DeployDependency[](0),
+            mechanism: DeployMechanism.Zoltu,
+            mechanismData: ""
         });
     }
 }
