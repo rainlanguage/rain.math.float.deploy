@@ -2,14 +2,13 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Test} from "forge-std-1.16.2/src/Test.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibDecimalFloatDeploy} from "src/lib/deploy/LibDecimalFloatDeploy.sol";
-import {LibRainDeploy} from "rain-deploy-0.1.11/src/lib/LibRainDeploy.sol";
+import {LibRainDeploy} from "rain-deploy-0.1.18/src/lib/LibRainDeploy.sol";
 
 /// @title LibDecimalFloatDeployProdTest
-/// @notice Verifies that both the log tables data contract and the DecimalFloat
-/// contract are deployed on every supported production network with the expected
-/// addresses and code hashes.
+/// @notice Verifies that the DecimalFloat contract is deployed on every
+/// supported production network with the expected address and code hash.
 contract LibDecimalFloatDeployProdTest is Test {
     /// The assertion messages do NOT name the network. The walk below prefixes
     /// every line it collects with the network, and naming it here too produced
@@ -22,12 +21,6 @@ contract LibDecimalFloatDeployProdTest is Test {
     /// creating it here would be wrong.
     function checkProdDeployment(uint256 forkId) internal {
         vm.selectFork(forkId);
-
-        address logTables = LibDecimalFloatDeploy.ZOLTU_DEPLOYED_LOG_TABLES_ADDRESS;
-        assertTrue(logTables.code.length > 0, "log tables not deployed");
-        assertEq(
-            logTables.codehash, LibDecimalFloatDeploy.LOG_TABLES_DATA_CONTRACT_HASH, "log tables code hash mismatch"
-        );
 
         address decimalFloat = LibDecimalFloatDeploy.ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS;
         assertTrue(decimalFloat.code.length > 0, "DecimalFloat not deployed");
@@ -161,8 +154,8 @@ contract LibDecimalFloatDeployProdTest is Test {
     ///
     /// This loop is correct today only by accident: nothing here touches the
     /// pinned addresses before the first select, so nothing is in the captured
-    /// set to carry forward. A `setUp` that etched the tables — the obvious thing
-    /// for someone to add — would put them in it and silently turn eight of the
+    /// set to carry forward. A `setUp` that etched the pinned address — the obvious
+    /// thing for someone to add — would put it in it and silently turn eight of the
     /// nine networks into `DecimalFloat not deployed`, naming real addresses on
     /// chains that really hold them. Two passes remove the accident.
     ///

@@ -18,17 +18,21 @@ out = 'out'
 solc = "0.8.25"
 optimizer = true
 
-# CRITICAL: 1_000_000, NOT the 100_000 that rain.factory.deploy /
-# rain.extrospection.deploy use. `DecimalFloat`'s deterministic Zoltu address
-# (ZOLTU_DEPLOYED_DECIMAL_FLOAT_ADDRESS = 0xEc632ea4…) and codehash
-# (DECIMAL_FLOAT_CONTRACT_HASH = 0x0d43af49…) are a pure function of its creation
-# bytecode, which is a pure function of these settings AND the library sources
-# it compiles against (the `rain-math-float` package). These match the exact
-# settings the live deployment was produced with in the pre-split hybrid
-# `rain.math.float` repo; changing the run count regenerates the
-# `src/generated/candidate/` pins at a different address, off the live
-# deployment that `src/lib/deploy/LibDecimalFloatDeploy.sol` aliases them as.
 optimizer_runs = 1000000
+
+# `DecimalFloat` alone compiles `via_ir` at 399 runs: the highest run count that
+# keeps its runtime code at least 256 bytes under EIP-170
+# (`DecimalFloatRuntimeSizeTest` pins the limit). The rain-deploy scripts and
+# tests cannot compile `via_ir` ("Could not create stack layout"), so the
+# default profile stays legacy. `DecimalFloat`'s Zoltu address and code hash
+# are a pure function of its creation bytecode, so changing this profile
+# regenerates the `src/generated/candidate/` pins at a different address.
+additional_compiler_profiles = [
+  { name = "decimal-float", via_ir = true, optimizer_runs = 399 },
+]
+compilation_restrictions = [
+  { paths = "src/concrete/DecimalFloat.sol", via_ir = true, min_optimizer_runs = 399, max_optimizer_runs = 399 },
+]
 
 evm_version = "cancun"
 
@@ -42,8 +46,8 @@ ffi = true
 libs = ["dependencies"]
 
 # Write access is scoped to exactly the files `script/Build.sol` generates:
-# everything under `src/generated/` (the candidate snapshots, the frozen tag
-# dirs `cutRelease()` adds, `LogTables.bytes.sol`) and the three generated
+# everything under `src/generated/` (the candidate snapshot and the frozen tag
+# dirs `cutRelease()` adds) and the three generated
 # released-suites libs in `src/lib/` — never hand-written source. It reads the
 # release version from this file when `cutRelease()` runs, and
 # `DecimalFloatDeploySnapshotTest`'s inherited frozen-record walk reads
@@ -54,6 +58,9 @@ libs = ["dependencies"]
 # into `./crates/float/abi`; `test/script/CopyArtifacts.t.sol` reads them back.
 fs_permissions = [
   { access = "read", path = "./foundry.toml" },
+  { access = "read", path = "./.env.example" },
+  { access = "read-write", path = "./.staged-config" },
+  { access = "read", path = "./script/build.sh" },
   { access = "read-write", path = "./src/generated" },
   { access = "read-write", path = "./src/lib/LibLogTablesReleased.sol" },
   { access = "read-write", path = "./src/lib/LibDecimalFloatReleased.sol" },
@@ -67,20 +74,14 @@ runs = 2048
 
 # `recursive_deps` is off, so every package an import resolves through is
 # declared here, including the ones reached only transitively through
-# `rain-math-float` (the concrete compiles `LibFormatDecimalFloat` →
-# `@openzeppelin-contracts` Strings and `LibParseDecimalFloat` → `rain-string`)
-# and via `rain-datacontract` (`LibDataContract` re-exports `rain-solmem`'s
-# `LibPointer`).
+# `rain-math-float` (`LibParseDecimalFloat` → `rain-string`, `rain-solmem`).
 [dependencies]
-forge-std = "1.16.2"
-"@openzeppelin-contracts" = "5.6.1"
+forge-std = "1.17.0"
+"rain-string" = "0.3.9"
 "rain-solmem" = "0.1.28"
-"rain-string" = "0.2.0"
-"rain-datacontract" = "0.2.0"
-"rain-deploy" = "0.1.11"
-"rain-lib-memkv" = "0.2.0"
-"rain-sol-codegen" = "0.1.37"
-"rain-math-float" = "0.2.4"
+"rain-deploy" = "0.1.18"
+"rain-sol-codegen" = "0.1.39"
+"rain-math-float" = "0.3.10"
 
 [soldeer]
 recursive_deps = false
@@ -90,16 +91,18 @@ recursive_deps = false
 # selects but this section does not name is not a skip: `vm.createSelectFork`
 # reverts with "invalid rpc url: <alias>" and takes the whole deploy down,
 # after it has already broadcast to the networks ahead of it in the list.
+# rain-deploy:generated:rpc_endpoints:begin
 [rpc_endpoints]
 arbitrum = "${ARBITRUM_RPC_URL}"
 base = "${BASE_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+bsc = "${BSC_RPC_URL}"
 ethereum = "${ETHEREUM_RPC_URL}"
 flare = "${FLARE_RPC_URL}"
 hyperevm = "${HYPEREVM_RPC_URL}"
-robinhood = "${ROBINHOOD_RPC_URL}"
-bsc = "${BSC_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
+robinhood = "${ROBINHOOD_RPC_URL}"
+# rain-deploy:generated:rpc_endpoints:end
 
 # `rainix-manual-sol-artifacts` passes `--verify` by default and exports exactly
 # these variable names, so a deploy without this section broadcasts and then
@@ -117,18 +120,21 @@ polygon = "${POLYGON_RPC_URL}"
 # The ids are verified rather than trusted: `testSupportedNetworkChainIdsAreBound`
 # forks each network and compares. `forge config` prints the resolved chain per
 # entry.
-[etherscan]
-arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}", chain = 42161 }
-base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}", chain = 8453 }
-base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}", chain = 84532 }
-ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
-flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}", chain = 14 }
-hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
+#
 # Robinhood Chain (4663) is not indexed by Etherscan V2. Its Blockscout speaks
 # the Etherscan API, so the entry points there (the key is ignored). That
 # explorer has rejected non-browser clients, so if `--verify` fails there,
 # verify afterwards through Sourcify: `forge verify-contract --verifier
 # sourcify --chain 4663 ...`.
-robinhood = { key = "${CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY}", chain = 4663, url = "https://robinhoodchain.blockscout.com/api" }
+# rain-deploy:generated:etherscan:begin
+[etherscan]
+arbitrum = { key = "${CI_DEPLOY_ARBITRUM_ETHERSCAN_API_KEY}", chain = 42161 }
+base = { key = "${CI_DEPLOY_BASE_ETHERSCAN_API_KEY}", chain = 8453 }
+base_sepolia = { key = "${CI_DEPLOY_BASE_SEPOLIA_ETHERSCAN_API_KEY}", chain = 84532 }
 bsc = { key = "${CI_DEPLOY_BSC_ETHERSCAN_API_KEY}", chain = 56 }
+ethereum = { key = "${CI_DEPLOY_ETHEREUM_ETHERSCAN_API_KEY}", chain = 1 }
+flare = { key = "${CI_DEPLOY_FLARE_ETHERSCAN_API_KEY}", chain = 14 }
+hyperevm = { key = "${CI_DEPLOY_HYPEREVM_ETHERSCAN_API_KEY}", chain = 999 }
 polygon = { key = "${CI_DEPLOY_POLYGON_ETHERSCAN_API_KEY}", chain = 137 }
+robinhood = { key = "${CI_DEPLOY_ROBINHOOD_ETHERSCAN_API_KEY}", chain = 4663, url = "https://robinhoodchain.blockscout.com/api" }
+# rain-deploy:generated:etherscan:end

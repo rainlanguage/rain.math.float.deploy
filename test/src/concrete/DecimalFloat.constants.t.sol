@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.2.4/src/lib/LibDecimalFloat.sol";
-import {LogTest} from "test/abstract/LogTest.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.3.10/src/lib/LibDecimalFloat.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {DecimalFloat} from "src/concrete/DecimalFloat.sol";
 
-contract DecimalFloatConstantsTest is LogTest {
+contract DecimalFloatConstantsTest is Test {
     using LibDecimalFloat for Float;
 
     function maxPositiveValueExternal() external pure returns (Float) {

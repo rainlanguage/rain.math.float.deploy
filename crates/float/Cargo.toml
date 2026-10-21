@@ -8,7 +8,7 @@ homepage = "https://github.com/rainlanguage/rain.math.float.deploy"
 repository = "https://github.com/rainlanguage/rain.math.float.deploy"
 
 [features]
-# Exposes the TestDecimalFloat harness (packLossless / unpack / the log tables)
+# Exposes the TestDecimalFloat harness (packLossless / unpack)
 # and the artifact override in `evm.rs` outside `cfg(test)`, for a consumer
 # running these bindings' tests over its own build of the concrete.
 test-harness = ["dep:serde_json"]

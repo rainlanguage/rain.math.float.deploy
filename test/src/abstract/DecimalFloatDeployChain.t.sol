@@ -2,9 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {RainDeployVerify} from "rain-deploy-0.1.11/src/abstract/RainDeployVerify.sol";
+import {RainDeployVerify} from "rain-deploy-0.1.18/src/abstract/RainDeployVerify.sol";
 import {DecimalFloatDeploySuites} from "src/abstract/DecimalFloatDeploySuites.sol";
-import {LibEtchLogTables} from "script/lib/LibEtchLogTables.sol";
 
 /// @title DecimalFloatDeployChainTest
 /// @notice Binds this repo's declaration to `RainDeployVerify`: every frozen
@@ -29,11 +28,4 @@ import {LibEtchLogTables} from "script/lib/LibEtchLogTables.sol";
 /// combined contract could not offer it. The duplicated runs are network-free
 /// and fast; losing the credential-free run, or losing a future union-level
 /// check, would both cost more.
-contract DecimalFloatDeployChainTest is DecimalFloatDeploySuites, RainDeployVerify {
-    /// Plants the log tables for the same reason the snapshot suite does: the
-    /// derivations all run on the local EVM before anything forks, and
-    /// `DecimalFloat`'s constructor reverts without the tables in place.
-    function setUp() public {
-        LibEtchLogTables.etchLogTables(vm);
-    }
-}
+contract DecimalFloatDeployChainTest is DecimalFloatDeploySuites, RainDeployVerify {}
