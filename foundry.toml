@@ -6,7 +6,7 @@
 name = "rain-math-float-deploy"
 # Deploy repo: a normal PR does not bump this; only a release moves it, in
 # lockstep with the frozen `src/generated/<tag>/` snapshot it names.
-version = "0.1.6"
+version = "0.1.7"
 
 [profile.default]
 src = 'src'
@@ -60,7 +60,6 @@ fs_permissions = [
   { access = "read", path = "./foundry.toml" },
   { access = "read", path = "./.env.example" },
   { access = "read-write", path = "./.staged-config" },
-  { access = "read", path = "./script/build.sh" },
   { access = "read-write", path = "./src/generated" },
   { access = "read-write", path = "./src/lib/LibLogTablesReleased.sol" },
   { access = "read-write", path = "./src/lib/LibDecimalFloatReleased.sol" },
@@ -79,10 +78,10 @@ runs = 2048
 forge-std = "1.17.0"
 "rain-string" = "0.3.9"
 "rain-solmem" = "0.1.28"
-"rain-deploy" = "0.1.20"
+"rain-deploy" = "0.1.22"
 "rain-sol-codegen" = "0.1.39"
 "rain-math-float" = "0.3.10"
-"rain-factory" = "0.2.4"
+"rain-factory" = "0.2.5"
 "@openzeppelin-contracts" = "5.7.0"
 
 [soldeer]
