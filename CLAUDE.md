@@ -45,5 +45,5 @@ generated deploy records and the deploy scripts + tests. The pure math
 - The on-chain deploy is a human-dispatched `Manual sol artifacts` run, BEFORE
   tagging, never on merge: `decimal-float`.
 - A manual `sol-v*` tag is the sole Soldeer release trigger
-  (`rainix-tag-release`); the Rust crate + npm wrapper publish on merge instead
+  (`rainix-tag-release`); the Rust crates + npm wrapper publish on merge instead
   (`crate-npm-release.yaml`). See README.md.
