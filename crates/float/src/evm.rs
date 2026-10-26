@@ -170,13 +170,107 @@ where
         ExecutionResult::Success { reason, output, .. } => {
             Err(FloatError::UnexpectedSuccess(reason, output))
         }
-        ExecutionResult::Revert { output, .. } => {
-            if let Ok(error) = DecimalFloat::DecimalFloatErrors::abi_decode(output.as_ref()) {
-                return Err(FloatError::DecimalFloat(Box::new(error)));
-            }
-
-            Err(FloatError::Revert(output))
-        }
+        ExecutionResult::Revert { output, .. } => Err(revert_error(output)),
         ExecutionResult::Halt { reason, .. } => Err(FloatError::Halt(reason)),
+    }
+}
+
+/// A revert as the concrete's error it decodes as, otherwise as its raw
+/// output.
+fn revert_error(output: Bytes) -> FloatError {
+    match DecimalFloat::DecimalFloatErrors::abi_decode(output.as_ref()) {
+        Ok(error) => FloatError::DecimalFloat(Box::new(error)),
+        Err(_) => FloatError::Revert(output),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloy::json_abi::JsonAbi;
+    use alloy::primitives::keccak256;
+    use alloy::sol_types::SolCall;
+
+    fn committed_errors() -> Vec<alloy::json_abi::Error> {
+        let json = include_str!("../abi/DecimalFloat.json");
+        let artifact: serde_json::Value = serde_json::from_str(json).unwrap();
+        let abi: JsonAbi = serde_json::from_value(artifact["abi"].clone()).unwrap();
+        abi.errors().cloned().collect()
+    }
+
+    #[test]
+    fn every_concrete_error_decodes_as_its_variant() {
+        let errors = committed_errors();
+        assert!(!errors.is_empty());
+        for error in errors {
+            let signature = error.signature();
+            let mut output = keccak256(&signature)[..4].to_vec();
+            for (i, _) in error.inputs.iter().enumerate() {
+                let mut word = [0u8; 32];
+                word[31] = i as u8 + 1;
+                output.extend(word);
+            }
+            match revert_error(Bytes::from(output.clone())) {
+                FloatError::DecimalFloat(decoded) => {
+                    assert_eq!(decoded.selector().as_slice(), &output[..4], "{signature}");
+                    let debug = format!("{decoded:?}");
+                    assert!(
+                        debug.starts_with(&format!("{}(", error.name)),
+                        "{signature}: {debug}"
+                    );
+                    assert_eq!(decoded.abi_encode(), output, "{signature}");
+                }
+                other => panic!("{signature}: {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn unknown_revert_keeps_its_output() {
+        let string_error =
+            alloy::sol_types::SolError::abi_encode(&alloy::sol_types::Revert::from("boom"));
+        let cases = [
+            Bytes::new(),
+            Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),
+            Bytes::from(string_error),
+            Bytes::from(keccak256("ExponentOverflow(int256,int256)")[..4].to_vec()),
+        ];
+        for output in cases {
+            match revert_error(output.clone()) {
+                FloatError::Revert(got) => assert_eq!(got, output),
+                other => panic!("{output}: {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn concrete_reverts_reach_the_caller_decoded() {
+        let calldata = DecimalFloat::divCall {
+            a: alloy::primitives::B256::with_last_byte(1),
+            b: alloy::primitives::B256::ZERO,
+        }
+        .abi_encode();
+        match execute_call(Bytes::from(calldata), |_| Ok(())) {
+            Err(FloatError::DecimalFloat(e)) => assert!(matches!(
+                *e,
+                DecimalFloat::DecimalFloatErrors::DivisionByZero(_)
+            )),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn unknown_selector_reverts_raw() {
+        match execute_call(Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]), |_| Ok(())) {
+            Err(FloatError::Revert(output)) => assert!(output.is_empty()),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn success_output_reaches_the_processor() {
+        let calldata = DecimalFloat::zeroCall {}.abi_encode();
+        let output = execute_call(Bytes::from(calldata), Ok).unwrap();
+        assert_eq!(output, Bytes::from(vec![0u8; 32]));
     }
 }

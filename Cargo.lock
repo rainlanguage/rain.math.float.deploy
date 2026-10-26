@@ -2220,6 +2220,8 @@ dependencies = [
  "alloy",
  "anyhow",
  "getrandom 0.2.16",
+ "num-bigint",
+ "num-traits",
  "proptest",
  "revm",
  "serde",

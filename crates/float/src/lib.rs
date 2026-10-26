@@ -1185,4 +1185,53 @@ mod tests {
             prop_assert_eq!(parsed.as_hex(), hex);
         }
     }
+
+    fn layout(f: Float) -> (num_bigint::BigInt, i64) {
+        let b = f.get_inner().0;
+        let e = i32::from_be_bytes([b[0], b[1], b[2], b[3]]) as i64;
+        (num_bigint::BigInt::from_signed_bytes_be(&b[4..]), e)
+    }
+
+    proptest! {
+        #[test]
+        fn pack_lossless_at_any_exponent(coefficient in any::<I224>(), exponent in any::<i32>()) {
+            let f = Float::pack_lossless(coefficient, exponent).unwrap();
+            let c: num_bigint::BigInt = coefficient.to_string().parse().unwrap();
+            let (got_c, got_e) = layout(f);
+            if c == num_bigint::BigInt::ZERO {
+                prop_assert_eq!(got_c, c);
+            } else {
+                let k = (exponent as i64 - got_e).unsigned_abs() as usize;
+                prop_assert!(k < 70);
+                let ten = num_traits::pow(num_bigint::BigInt::from(10), k);
+                if got_e <= exponent as i64 {
+                    prop_assert_eq!(got_c, c * ten);
+                } else {
+                    prop_assert_eq!(got_c * ten, c);
+                }
+            }
+        }
+
+        #[test]
+        fn unpack_is_the_layout(bytes in any::<[u8; 32]>()) {
+            let f = Float::from_raw(B256::from(bytes));
+            let (c, e) = f.unpack().unwrap();
+            let (want_c, want_e) = layout(f);
+            prop_assert_eq!(c.to_string(), want_c.to_string());
+            prop_assert_eq!(e.to_string(), want_e.to_string());
+            prop_assert_eq!(f.show_unpacked().unwrap(), format!("{want_c}e{want_e}"));
+        }
+    }
+
+    #[test]
+    fn unpack_hand_values() {
+        let f = Float::from_raw(fixed_bytes!(
+            "fffffffe0000000000000000000000000000000000000000000000000000013a"
+        ));
+        assert_eq!(f.show_unpacked().unwrap(), "314e-2");
+        let f = Float::from_raw(B256::repeat_byte(0xff));
+        assert_eq!(f.show_unpacked().unwrap(), "-1e-1");
+        let f = Float::pack_lossless(I224::try_from(-5).unwrap(), 3).unwrap();
+        assert_eq!(f.show_unpacked().unwrap(), "-5e3");
+    }
 }
