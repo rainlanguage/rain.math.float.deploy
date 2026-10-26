@@ -1,5 +1,6 @@
 name: Crate + npm Release
-# The Rust bindings (`rain-math-float` crate) and their wasm/npm wrapper
+# The Rust crates (`rain-math-float`, `rain-math-float-macro`,
+# `rain-math-float-serde`) and the wasm/npm wrapper
 # (`@rainlanguage/float`) publish on merge to main via rainix-autopublish's
 # next-version lifecycle — the same flow the library used before the split.
 #
@@ -17,6 +18,6 @@ jobs:
   release:
     uses: rainlanguage/rainix/.github/workflows/rainix-autopublish.yaml@main
     with:
-      crate: rain-math-float
+      crates: "rain-math-float rain-math-float-macro rain-math-float-serde"
       npm-package: "@rainlanguage/float"
     secrets: inherit
