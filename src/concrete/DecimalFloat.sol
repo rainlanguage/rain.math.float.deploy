@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {LibDecimalFloat, Float} from "rain-math-float-0.3.10/src/lib/LibDecimalFloat.sol";
-import {LibFormatDecimalFloat} from "rain-math-float-0.3.10/src/lib/format/LibFormatDecimalFloat.sol";
-import {LibParseDecimalFloat} from "rain-math-float-0.3.10/src/lib/parse/LibParseDecimalFloat.sol";
+import {LibDecimalFloat, Float} from "rain-math-float-0.3.11/src/lib/LibDecimalFloat.sol";
+import {LibFormatDecimalFloat} from "rain-math-float-0.3.11/src/lib/format/LibFormatDecimalFloat.sol";
+import {LibParseDecimalFloat} from "rain-math-float-0.3.11/src/lib/parse/LibParseDecimalFloat.sol";
 
 contract DecimalFloat {
     using LibDecimalFloat for Float;
