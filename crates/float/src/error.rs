@@ -38,44 +38,43 @@ pub enum FloatError {
     JsSysError(String),
 }
 
-#[derive(Debug)]
+mod parse_errors {
+    alloy::sol! {
+        error ParseEmptyDecimalString(uint256 position);
+        error MalformedDecimalPoint(uint256 position);
+        error MalformedExponentDigits(uint256 position);
+        error ParseDecimalPrecisionLoss(uint256 position);
+        error ParseDecimalFloatExcessCharacters();
+    }
+}
+
+/// The error selectors `DecimalFloat.parse` returns instead of reverting.
+#[derive(Debug, PartialEq, Eq)]
 pub enum DecimalFloatErrorSelector {
     ExponentOverflow,
-    ExponentUnderflow,
-    FixedDecimalOverflow,
-    Log10Negative,
-    Log10Zero,
-    LossyConversionFromFloat,
-    NegativeFixedDecimalConversion,
-    WithTargetExponentOverflow,
+    ParseEmptyDecimalString,
+    MalformedDecimalPoint,
+    MalformedExponentDigits,
+    ParseDecimalPrecisionLoss,
+    ParseDecimalFloatExcessCharacters,
 }
 
 impl DecimalFloatErrorSelector {
-    /// A detailed, human-readable description of the underlying Solidity
-    /// `DecimalFloat` error that produced this selector.
+    /// A detailed, human-readable description of the parse failure this
+    /// selector reports.
     pub fn to_readable_msg(&self) -> &'static str {
         match self {
             Self::ExponentOverflow => {
                 "The number is too large to represent as a Float (its exponent exceeds the maximum supported magnitude)."
             }
-            Self::ExponentUnderflow => {
-                "The number is too small to represent as a Float (its exponent is below the minimum supported magnitude, so it cannot be distinguished from zero)."
+            Self::ParseEmptyDecimalString => "There are no digits where the number should start.",
+            Self::MalformedDecimalPoint => "The decimal point is not followed by any digits.",
+            Self::MalformedExponentDigits => "The exponent has no digits after the `e`.",
+            Self::ParseDecimalPrecisionLoss => {
+                "The number has more precision than a Float can represent exactly."
             }
-            Self::FixedDecimalOverflow => {
-                "The number is too large to convert to a fixed-decimal value at the requested number of decimals (the scaled value exceeds the unsigned 256-bit range)."
-            }
-            Self::Log10Negative => {
-                "Cannot take the base-10 logarithm of a negative number."
-            }
-            Self::Log10Zero => "Cannot take the base-10 logarithm of zero.",
-            Self::LossyConversionFromFloat => {
-                "Converting this Float to the requested type would lose precision, and a lossless conversion was required."
-            }
-            Self::NegativeFixedDecimalConversion => {
-                "Cannot convert a negative number to an unsigned fixed-decimal value."
-            }
-            Self::WithTargetExponentOverflow => {
-                "The number cannot be rescaled to the requested target exponent without overflowing the Float coefficient."
+            Self::ParseDecimalFloatExcessCharacters => {
+                "There are unexpected characters after the number."
             }
         }
     }
@@ -88,20 +87,20 @@ impl TryFrom<FixedBytes<4>> for DecimalFloatErrorSelector {
         let FixedBytes(bytes) = error_selector;
         match bytes {
             <DecimalFloat::ExponentOverflow as SolError>::SELECTOR => Ok(Self::ExponentOverflow),
-            <DecimalFloat::ExponentUnderflow as SolError>::SELECTOR => Ok(Self::ExponentUnderflow),
-            <DecimalFloat::FixedDecimalOverflow as SolError>::SELECTOR => {
-                Ok(Self::FixedDecimalOverflow)
+            <parse_errors::ParseEmptyDecimalString as SolError>::SELECTOR => {
+                Ok(Self::ParseEmptyDecimalString)
             }
-            <DecimalFloat::Log10Negative as SolError>::SELECTOR => Ok(Self::Log10Negative),
-            <DecimalFloat::Log10Zero as SolError>::SELECTOR => Ok(Self::Log10Zero),
-            <DecimalFloat::LossyConversionFromFloat as SolError>::SELECTOR => {
-                Ok(Self::LossyConversionFromFloat)
+            <parse_errors::MalformedDecimalPoint as SolError>::SELECTOR => {
+                Ok(Self::MalformedDecimalPoint)
             }
-            <DecimalFloat::NegativeFixedDecimalConversion as SolError>::SELECTOR => {
-                Ok(Self::NegativeFixedDecimalConversion)
+            <parse_errors::MalformedExponentDigits as SolError>::SELECTOR => {
+                Ok(Self::MalformedExponentDigits)
             }
-            <DecimalFloat::WithTargetExponentOverflow as SolError>::SELECTOR => {
-                Ok(Self::WithTargetExponentOverflow)
+            <parse_errors::ParseDecimalPrecisionLoss as SolError>::SELECTOR => {
+                Ok(Self::ParseDecimalPrecisionLoss)
+            }
+            <parse_errors::ParseDecimalFloatExcessCharacters as SolError>::SELECTOR => {
+                Ok(Self::ParseDecimalFloatExcessCharacters)
             }
             _ => Err(error_selector),
         }
@@ -188,38 +187,57 @@ mod tests {
 
     #[test]
     fn test_decimal_float_error_selector_readable_msgs() {
-        assert_eq!(
-            DecimalFloatErrorSelector::ExponentOverflow.to_readable_msg(),
-            "The number is too large to represent as a Float (its exponent exceeds the maximum supported magnitude)."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::ExponentUnderflow.to_readable_msg(),
-            "The number is too small to represent as a Float (its exponent is below the minimum supported magnitude, so it cannot be distinguished from zero)."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::FixedDecimalOverflow.to_readable_msg(),
-            "The number is too large to convert to a fixed-decimal value at the requested number of decimals (the scaled value exceeds the unsigned 256-bit range)."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::Log10Negative.to_readable_msg(),
-            "Cannot take the base-10 logarithm of a negative number."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::Log10Zero.to_readable_msg(),
-            "Cannot take the base-10 logarithm of zero."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::LossyConversionFromFloat.to_readable_msg(),
-            "Converting this Float to the requested type would lose precision, and a lossless conversion was required."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::NegativeFixedDecimalConversion.to_readable_msg(),
-            "Cannot convert a negative number to an unsigned fixed-decimal value."
-        );
-        assert_eq!(
-            DecimalFloatErrorSelector::WithTargetExponentOverflow.to_readable_msg(),
-            "The number cannot be rescaled to the requested target exponent without overflowing the Float coefficient."
-        );
+        use DecimalFloatErrorSelector as S;
+        let cases = [
+            (
+                S::ExponentOverflow,
+                "The number is too large to represent as a Float (its exponent exceeds the maximum supported magnitude).",
+            ),
+            (
+                S::ParseEmptyDecimalString,
+                "There are no digits where the number should start.",
+            ),
+            (
+                S::MalformedDecimalPoint,
+                "The decimal point is not followed by any digits.",
+            ),
+            (
+                S::MalformedExponentDigits,
+                "The exponent has no digits after the `e`.",
+            ),
+            (
+                S::ParseDecimalPrecisionLoss,
+                "The number has more precision than a Float can represent exactly.",
+            ),
+            (
+                S::ParseDecimalFloatExcessCharacters,
+                "There are unexpected characters after the number.",
+            ),
+        ];
+        for (selector, msg) in cases {
+            assert_eq!(selector.to_readable_msg(), msg);
+        }
+    }
+
+    #[test]
+    fn test_decimal_float_error_selector_from_signature() {
+        use DecimalFloatErrorSelector as S;
+        let cases = [
+            ("ExponentOverflow(int256,int256)", S::ExponentOverflow),
+            ("ParseEmptyDecimalString(uint256)", S::ParseEmptyDecimalString),
+            ("MalformedDecimalPoint(uint256)", S::MalformedDecimalPoint),
+            ("MalformedExponentDigits(uint256)", S::MalformedExponentDigits),
+            ("ParseDecimalPrecisionLoss(uint256)", S::ParseDecimalPrecisionLoss),
+            ("ParseDecimalFloatExcessCharacters()", S::ParseDecimalFloatExcessCharacters),
+        ];
+        for (signature, want) in cases {
+            let selector = FixedBytes::<4>::from_slice(&alloy::primitives::keccak256(signature)[..4]);
+            assert_eq!(DecimalFloatErrorSelector::try_from(selector), Ok(want), "{signature}");
+        }
+        for unknown in ["Log10Zero()", "ExponentUnderflow(int256,int256)", "ParseDecimalNoSignificantDigits(uint256)"] {
+            let selector = FixedBytes::<4>::from_slice(&alloy::primitives::keccak256(unknown)[..4]);
+            assert_eq!(DecimalFloatErrorSelector::try_from(selector), Err(selector), "{unknown}");
+        }
     }
 
     #[test]
@@ -242,10 +260,10 @@ mod tests {
 
     #[test]
     fn test_float_error_readable_msg_decimal_float_selector_known() {
-        let err = FloatError::DecimalFloatSelector(Ok(DecimalFloatErrorSelector::Log10Zero));
+        let err = FloatError::DecimalFloatSelector(Ok(DecimalFloatErrorSelector::MalformedDecimalPoint));
         assert_eq!(
             err.to_readable_msg(),
-            "Cannot take the base-10 logarithm of zero."
+            "The decimal point is not followed by any digits."
         );
     }
 
