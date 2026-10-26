@@ -52,12 +52,22 @@ fn raw_accessors_and_conversions() {
 #[test]
 fn hex_hand_values() {
     let f = float(&Dec::new(-1, -1));
-    assert_eq!(f.as_hex(), "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+    assert_eq!(
+        f.as_hex(),
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    );
     let f = float(&Dec::new(314, -2));
-    assert_eq!(f.as_hex(), "0xfffffffe0000000000000000000000000000000000000000000000000000013a");
-    let parsed = Float::from_hex("0xfffffffe0000000000000000000000000000000000000000000000000000013a").unwrap();
+    assert_eq!(
+        f.as_hex(),
+        "0xfffffffe0000000000000000000000000000000000000000000000000000013a"
+    );
+    let parsed =
+        Float::from_hex("0xfffffffe0000000000000000000000000000000000000000000000000000013a")
+            .unwrap();
     assert_eq!(parsed.get_inner(), f.get_inner());
-    let unprefixed = Float::from_hex("fffffffe0000000000000000000000000000000000000000000000000000013a").unwrap();
+    let unprefixed =
+        Float::from_hex("fffffffe0000000000000000000000000000000000000000000000000000013a")
+            .unwrap();
     assert_eq!(unprefixed.get_inner(), f.get_inner());
     for bad in ["0x13a", "0xzz", ""] {
         match Float::from_hex(bad) {
@@ -71,14 +81,17 @@ fn hex_hand_values() {
 fn serde_is_the_hex_string() {
     let f = float(&Dec::new(314, -2));
     let json = serde_json::to_string(&f).unwrap();
-    assert_eq!(json, "\"0xfffffffe0000000000000000000000000000000000000000000000000000013a\"");
+    assert_eq!(
+        json,
+        "\"0xfffffffe0000000000000000000000000000000000000000000000000000013a\""
+    );
     let back: Float = serde_json::from_str(&json).unwrap();
     assert_eq!(back.get_inner(), f.get_inner());
 }
 
 proptest! {
     #[test]
-    fn hex_round_trips(a in r::float()) {
+    fn hex_round_trips(a in r::arb_float()) {
         let f = float(&a);
         let hex = f.as_hex();
         prop_assert_eq!(hex.clone(), format!("0x{}", alloy::hex::encode(a.to_bytes())));

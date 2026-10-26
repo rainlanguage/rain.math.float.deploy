@@ -12,12 +12,27 @@ fn check_compare(a: &Dec, b: &Dec) -> Result<(), TestCaseError> {
     prop_assert_eq!(fa.lt(fb).unwrap(), want == Ordering::Less, "lt{}", case);
     prop_assert_eq!(fa.gt(fb).unwrap(), want == Ordering::Greater, "gt{}", case);
     prop_assert_eq!(fa.eq(fb).unwrap(), want == Ordering::Equal, "eq{}", case);
-    prop_assert_eq!(fa.lte(fb).unwrap(), want != Ordering::Greater, "lte{}", case);
+    prop_assert_eq!(
+        fa.lte(fb).unwrap(),
+        want != Ordering::Greater,
+        "lte{}",
+        case
+    );
     prop_assert_eq!(fa.gte(fb).unwrap(), want != Ordering::Less, "gte{}", case);
     let min = if want == Ordering::Less { fa } else { fb };
     let max = if want == Ordering::Greater { fa } else { fb };
-    prop_assert_eq!(fa.min(fb).unwrap().get_inner(), min.get_inner(), "min{}", case);
-    prop_assert_eq!(fa.max(fb).unwrap().get_inner(), max.get_inner(), "max{}", case);
+    prop_assert_eq!(
+        fa.min(fb).unwrap().get_inner(),
+        min.get_inner(),
+        "min{}",
+        case
+    );
+    prop_assert_eq!(
+        fa.max(fb).unwrap().get_inner(),
+        max.get_inner(),
+        "max{}",
+        case
+    );
     prop_assert_eq!(fa.is_zero().unwrap(), a.is_zero(), "is_zero({})", show(a));
     Ok(())
 }

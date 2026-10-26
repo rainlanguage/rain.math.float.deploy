@@ -5,13 +5,13 @@
 #![allow(dead_code)]
 
 use alloy::primitives::{B256, U256};
+use alloy::sol_types::SolInterface;
 use core::cmp::Ordering;
 use num_bigint::{BigInt, Sign};
 use num_traits::{Signed, Zero};
 use proptest::prelude::*;
 use proptest::test_runner::TestCaseError;
 use rain_math_float::{Float, FloatError};
-use alloy::sol_types::SolInterface;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RefError {
@@ -142,9 +142,7 @@ impl Dec {
             oa.cmp(&ob)
         } else {
             let e = self.e.min(other.e);
-            self.at_exponent(e)
-                .abs()
-                .cmp(&other.at_exponent(e).abs())
+            self.at_exponent(e).abs().cmp(&other.at_exponent(e).abs())
         };
         if sa == Sign::Minus {
             magnitude.reverse()
@@ -368,7 +366,11 @@ pub fn to_fixed_decimal_lossy(x: &Dec, decimals: u8) -> Result<(U256, bool), Ref
         return Err(RefError::FixedDecimalOverflow);
     }
     let t = scaled.trunc();
-    let int = if t.e > 0 { t.at_exponent(0) } else { t.c.clone() };
+    let int = if t.e > 0 {
+        t.at_exponent(0)
+    } else {
+        t.c.clone()
+    };
     if int > u256_to_big(U256::MAX) {
         return Err(RefError::FixedDecimalOverflow);
     }
@@ -444,7 +446,7 @@ pub fn coefficient() -> BoxedStrategy<BigInt> {
     let sign = any::<bool>();
     prop_oneof![
         3 => any::<[u8; 28]>().prop_map(|b| BigInt::from_signed_bytes_be(&b)),
-        3 => (1u64..=67, any::<[u8; 32]>(), sign.clone()).prop_map(|(n, b, neg)| {
+        3 => (1u64..=67, any::<[u8; 32]>(), sign).prop_map(|(n, b, neg)| {
             let lo = pow10(n - 1);
             let span = pow10(n) - &lo;
             let c = lo + BigInt::from_bytes_be(Sign::Plus, &b) % span;
@@ -476,7 +478,7 @@ pub fn exponent() -> BoxedStrategy<i64> {
     .boxed()
 }
 
-pub fn float() -> BoxedStrategy<Dec> {
+pub fn arb_float() -> BoxedStrategy<Dec> {
     (coefficient(), exponent())
         .prop_map(|(c, e)| Dec::new(c, e))
         .boxed()
@@ -485,8 +487,8 @@ pub fn float() -> BoxedStrategy<Dec> {
 /// Two operands, often at nearby exponents so their digits interact.
 pub fn pair() -> BoxedStrategy<(Dec, Dec)> {
     prop_oneof![
-        1 => (float(), float()),
-        2 => (float(), coefficient(), -80i64..=80).prop_map(|(a, c, off)| {
+        1 => (arb_float(), arb_float()),
+        2 => (arb_float(), coefficient(), -80i64..=80).prop_map(|(a, c, off)| {
             let e = (a.e + off).clamp(I32_MIN, I32_MAX);
             (a, Dec::new(c, e))
         }),
@@ -518,7 +520,9 @@ impl RefError {
 }
 
 pub fn selector(signature: &str) -> [u8; 4] {
-    alloy::primitives::keccak256(signature)[..4].try_into().unwrap()
+    alloy::primitives::keccak256(signature)[..4]
+        .try_into()
+        .unwrap()
 }
 
 /// The revert a crate call returned is exactly `want`, decoded as the
@@ -546,7 +550,12 @@ pub fn check_float(
     match (got, want) {
         (Ok(g), Ok(w)) => {
             let g = dec(g);
-            prop_assert!(g.eq_value(&w), "{case}: crate {}, reference {}", show(&g), show(&w));
+            prop_assert!(
+                g.eq_value(&w),
+                "{case}: crate {}, reference {}",
+                show(&g),
+                show(&w)
+            );
         }
         (Err(g), Err(w)) => prop_assert!(is_revert(&g, w), "{case}: crate {g:?}, reference {w:?}"),
         (g, w) => prop_assert!(false, "{case}: crate {g:?}, reference {w:?}"),

@@ -53,8 +53,11 @@ fn committed_abi() -> JsonAbi {
 }
 
 fn pinned(name: &str) -> Bytes {
-    let source = std::fs::read_to_string(root().join("src/generated/candidate/DecimalFloat.sol")).unwrap();
-    let start = source.find(&format!("{name} =")).unwrap_or_else(|| panic!("no {name}"));
+    let source =
+        std::fs::read_to_string(root().join("src/generated/candidate/DecimalFloat.sol")).unwrap();
+    let start = source
+        .find(&format!("{name} ="))
+        .unwrap_or_else(|| panic!("no {name}"));
     let rest = &source[start..];
     let open = rest.find("hex\"").unwrap() + 4;
     let close = open + rest[open..].find('"').unwrap();
@@ -71,10 +74,14 @@ fn run(calldata: Vec<u8>) -> ExecutionResult {
     let mut db = InMemoryDB::default();
     db.insert_account_info(
         address,
-        AccountInfo::default().with_code(Bytecode::new_legacy(DecimalFloat::DEPLOYED_BYTECODE.clone())),
+        AccountInfo::default().with_code(Bytecode::new_legacy(
+            DecimalFloat::DEPLOYED_BYTECODE.clone(),
+        )),
     );
     let mut evm = Context::mainnet().with_db(db).build_mainnet();
-    evm.system_call(address, Bytes::from(calldata)).unwrap().result
+    evm.system_call(address, Bytes::from(calldata))
+        .unwrap()
+        .result
 }
 
 #[test]
@@ -82,8 +89,11 @@ fn crate_bytecode_is_the_pinned_deploy() {
     assert_eq!(DecimalFloat::DEPLOYED_BYTECODE, pinned("RUNTIME_CODE"));
     assert_eq!(DecimalFloat::BYTECODE, pinned("CREATION_CODE"));
     let hash: B256 = {
-        let source = std::fs::read_to_string(root().join("src/generated/candidate/DecimalFloat.sol")).unwrap();
-        let at = source.find("BYTECODE_HASH = bytes32(0x").unwrap() + "BYTECODE_HASH = bytes32(".len();
+        let source =
+            std::fs::read_to_string(root().join("src/generated/candidate/DecimalFloat.sol"))
+                .unwrap();
+        let at =
+            source.find("BYTECODE_HASH = bytes32(0x").unwrap() + "BYTECODE_HASH = bytes32(".len();
         source[at..at + 66].parse().unwrap()
     };
     assert_eq!(keccak256(&DecimalFloat::DEPLOYED_BYTECODE), hash);
@@ -106,11 +116,18 @@ fn committed_abi_has_every_call_the_crate_makes() {
 #[test]
 fn removed_formats_are_absent() {
     let abi = committed_abi();
-    let formats: Vec<String> = abi.function("format").unwrap().iter().map(|f| f.signature()).collect();
+    let formats: Vec<String> = abi
+        .function("format")
+        .unwrap()
+        .iter()
+        .map(|f| f.signature())
+        .collect();
     assert_eq!(formats, vec!["format(bytes32,bool)".to_string()]);
     for signature in REMOVED {
         match run(selector(signature).into_iter().chain([0u8; 96]).collect()) {
-            ExecutionResult::Revert { output, .. } => assert!(output.is_empty(), "{signature}: {output}"),
+            ExecutionResult::Revert { output, .. } => {
+                assert!(output.is_empty(), "{signature}: {output}")
+            }
             other => panic!("{signature} dispatched: {other:?}"),
         }
     }
@@ -126,7 +143,9 @@ fn concrete_dispatches_every_call_the_crate_makes() {
             calldata.extend([0u8; 64]);
         }
         match run(calldata) {
-            ExecutionResult::Success { output, .. } => assert!(!output.data().is_empty(), "{signature}"),
+            ExecutionResult::Success { output, .. } => {
+                assert!(!output.data().is_empty(), "{signature}")
+            }
             ExecutionResult::Revert { output, .. } => assert!(
                 DecimalFloat::DecimalFloatErrors::abi_decode(&output).is_ok(),
                 "{signature} reverted without a DecimalFloat error: {output}"

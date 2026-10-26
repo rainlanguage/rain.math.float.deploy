@@ -224,19 +224,44 @@ mod tests {
         use DecimalFloatErrorSelector as S;
         let cases = [
             ("ExponentOverflow(int256,int256)", S::ExponentOverflow),
-            ("ParseEmptyDecimalString(uint256)", S::ParseEmptyDecimalString),
+            (
+                "ParseEmptyDecimalString(uint256)",
+                S::ParseEmptyDecimalString,
+            ),
             ("MalformedDecimalPoint(uint256)", S::MalformedDecimalPoint),
-            ("MalformedExponentDigits(uint256)", S::MalformedExponentDigits),
-            ("ParseDecimalPrecisionLoss(uint256)", S::ParseDecimalPrecisionLoss),
-            ("ParseDecimalFloatExcessCharacters()", S::ParseDecimalFloatExcessCharacters),
+            (
+                "MalformedExponentDigits(uint256)",
+                S::MalformedExponentDigits,
+            ),
+            (
+                "ParseDecimalPrecisionLoss(uint256)",
+                S::ParseDecimalPrecisionLoss,
+            ),
+            (
+                "ParseDecimalFloatExcessCharacters()",
+                S::ParseDecimalFloatExcessCharacters,
+            ),
         ];
         for (signature, want) in cases {
-            let selector = FixedBytes::<4>::from_slice(&alloy::primitives::keccak256(signature)[..4]);
-            assert_eq!(DecimalFloatErrorSelector::try_from(selector), Ok(want), "{signature}");
+            let selector =
+                FixedBytes::<4>::from_slice(&alloy::primitives::keccak256(signature)[..4]);
+            assert_eq!(
+                DecimalFloatErrorSelector::try_from(selector),
+                Ok(want),
+                "{signature}"
+            );
         }
-        for unknown in ["Log10Zero()", "ExponentUnderflow(int256,int256)", "ParseDecimalNoSignificantDigits(uint256)"] {
+        for unknown in [
+            "Log10Zero()",
+            "ExponentUnderflow(int256,int256)",
+            "ParseDecimalNoSignificantDigits(uint256)",
+        ] {
             let selector = FixedBytes::<4>::from_slice(&alloy::primitives::keccak256(unknown)[..4]);
-            assert_eq!(DecimalFloatErrorSelector::try_from(selector), Err(selector), "{unknown}");
+            assert_eq!(
+                DecimalFloatErrorSelector::try_from(selector),
+                Err(selector),
+                "{unknown}"
+            );
         }
     }
 
@@ -260,7 +285,8 @@ mod tests {
 
     #[test]
     fn test_float_error_readable_msg_decimal_float_selector_known() {
-        let err = FloatError::DecimalFloatSelector(Ok(DecimalFloatErrorSelector::MalformedDecimalPoint));
+        let err =
+            FloatError::DecimalFloatSelector(Ok(DecimalFloatErrorSelector::MalformedDecimalPoint));
         assert_eq!(
             err.to_readable_msg(),
             "The decimal point is not followed by any digits."

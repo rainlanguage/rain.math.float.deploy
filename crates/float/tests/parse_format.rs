@@ -7,7 +7,7 @@ use rain_math_float::error::DecimalFloatErrorSelector as Selector;
 use rain_math_float::{Float, FloatError};
 use reference::{self as r, check, dec, float, run, show, Dec, Packed, RefError};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 enum ParseRef {
     Value(Dec),
     Selector(&'static str),
@@ -15,13 +15,18 @@ enum ParseRef {
 
 /// A well formed literal `-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?`.
 fn literal() -> BoxedStrategy<String> {
-    let digits = |max: usize| proptest::collection::vec(0u8..10, 1..=max)
-        .prop_map(|d| d.into_iter().map(|x| char::from(b'0' + x)).collect::<String>());
+    let digits = |max: usize| {
+        proptest::collection::vec(0u8..10, 1..=max).prop_map(|d| {
+            d.into_iter()
+                .map(|x| char::from(b'0' + x))
+                .collect::<String>()
+        })
+    };
     let exponent = prop_oneof![
-        3 => (-90i64..=90),
+        3 => -90i64..=90,
         1 => any::<i32>().prop_map(i64::from),
-        1 => (i64::from(i32::MAX) - 80..=i64::from(i32::MAX) + 80),
-        1 => (i64::from(i32::MIN) - 80..=i64::from(i32::MIN) + 80),
+        1 => i64::from(i32::MAX) - 80..=i64::from(i32::MAX) + 80,
+        1 => i64::from(i32::MIN) - 80..=i64::from(i32::MIN) + 80,
     ];
     (
         any::<bool>(),
@@ -53,14 +58,19 @@ fn literal() -> BoxedStrategy<String> {
 
 fn literal_value(s: &str) -> Dec {
     let (mantissa, exp) = match s.find(['e', 'E']) {
-        Some(i) => (&s[..i], s[i + 1..].trim_start_matches('+').parse::<i64>().unwrap()),
+        Some(i) => (
+            &s[..i],
+            s[i + 1..].trim_start_matches('+').parse::<i64>().unwrap(),
+        ),
         None => (s, 0),
     };
     let (int, frac) = match mantissa.find('.') {
         Some(i) => (&mantissa[..i], &mantissa[i + 1..]),
         None => (mantissa, ""),
     };
-    let mut c: BigInt = format!("{}{}", int.trim_start_matches('-'), frac).parse().unwrap();
+    let mut c: BigInt = format!("{}{}", int.trim_start_matches('-'), frac)
+        .parse()
+        .unwrap();
     if int.starts_with('-') {
         c = -c;
     }
@@ -70,7 +80,9 @@ fn literal_value(s: &str) -> Dec {
 fn parse_ref(s: &str) -> ParseRef {
     match r::pack(&literal_value(s)) {
         Packed::Value(v, true) => ParseRef::Value(v),
-        Packed::Value(_, false) | Packed::Underflow => ParseRef::Selector("ParseDecimalPrecisionLoss(uint256)"),
+        Packed::Value(_, false) | Packed::Underflow => {
+            ParseRef::Selector("ParseDecimalPrecisionLoss(uint256)")
+        }
         Packed::Overflow => ParseRef::Selector("ExponentOverflow(int256,int256)"),
     }
 }
@@ -89,10 +101,16 @@ fn selector_signature(s: &Selector) -> &'static str {
 fn check_parse(s: &str, want: ParseRef) -> Result<(), TestCaseError> {
     match (Float::parse(s.to_string()), want) {
         (Ok(got), ParseRef::Value(w)) => {
-            prop_assert!(dec(got).eq_value(&w), "parse({s:?}): crate {}, reference {}", show(&dec(got)), show(&w));
+            prop_assert!(
+                dec(got).eq_value(&w),
+                "parse({s:?}): crate {}, reference {}",
+                show(&dec(got)),
+                show(&w)
+            );
         }
         (Err(FloatError::DecimalFloatSelector(Ok(got))), ParseRef::Selector(w)) => {
-            prop_assert_eq!(selector_signature(&got), w, "parse({:?})", s);        }
+            prop_assert_eq!(selector_signature(&got), w, "parse({:?})", s);
+        }
         (got, want) => prop_assert!(false, "parse({s:?}): crate {got:?}, reference {want:?}"),
     }
     Ok(())
@@ -101,7 +119,12 @@ fn check_parse(s: &str, want: ParseRef) -> Result<(), TestCaseError> {
 fn check_format(a: &Dec) -> Result<(), TestCaseError> {
     let f = float(a);
     let case = format!("format({})", show(a));
-    prop_assert_eq!(f.format_with_scientific(true).unwrap(), r::format_scientific(a), "{} scientific", case);
+    prop_assert_eq!(
+        f.format_with_scientific(true).unwrap(),
+        r::format_scientific(a),
+        "{} scientific",
+        case
+    );
     check(&case, f.format_with_scientific(false), r::format_plain(a))
 }
 
@@ -114,7 +137,7 @@ proptest! {
     }
 
     #[test]
-    fn format_matches_reference(a in r::float()) {
+    fn format_matches_reference(a in r::arb_float()) {
         check_format(&a)?;
     }
 
@@ -124,7 +147,7 @@ proptest! {
     }
 
     #[test]
-    fn format_scientific_parses_back(a in r::float()) {
+    fn format_scientific_parses_back(a in r::arb_float()) {
         let text = float(&a).format_with_scientific(true).unwrap();
         check_parse(&text, ParseRef::Value(a))?;
     }
@@ -184,9 +207,20 @@ fn format_hand_values() {
 
 #[test]
 fn format_plain_reverts_past_its_exponent_limit() {
-    let revert = |a: Dec| run(check(&show(&a), float(&a).format_with_scientific(false), Err(RefError::UnformatableExponent)));
+    let revert = |a: Dec| {
+        run(check(
+            &show(&a),
+            float(&a).format_with_scientific(false),
+            Err(RefError::UnformatableExponent),
+        ))
+    };
     revert(Dec::new(1, 1001));
     revert(Dec::new(1, -1001));
     revert(Dec::new(10, 1000));
-    assert_eq!(float(&Dec::new(10, -1001)).format_with_scientific(false).unwrap(), format!("0.{}1", "0".repeat(999)));
+    assert_eq!(
+        float(&Dec::new(10, -1001))
+            .format_with_scientific(false)
+            .unwrap(),
+        format!("0.{}1", "0".repeat(999))
+    );
 }

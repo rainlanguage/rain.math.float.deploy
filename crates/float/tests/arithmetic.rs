@@ -33,7 +33,7 @@ proptest! {
     }
 
     #[test]
-    fn unary_ops_match_reference(a in r::float()) {
+    fn unary_ops_match_reference(a in r::arb_float()) {
         check_unary(&a)?;
     }
 }
@@ -56,7 +56,8 @@ fn binary_ops_distinguish_operations() {
 #[test]
 fn binary_ops_hand_values() {
     let p = |s: &str| rain_math_float::Float::parse(s.to_string()).unwrap();
-    let fmt = |f: Result<rain_math_float::Float, _>| f.unwrap().format_with_scientific(false).unwrap();
+    let fmt =
+        |f: Result<rain_math_float::Float, _>| f.unwrap().format_with_scientific(false).unwrap();
     assert_eq!(fmt(p("3.14") + p("-1.04")), "2.1");
     assert_eq!(fmt(p("3.14") - p("-1.04")), "4.18");
     assert_eq!(fmt(p("3.14") * p("-2")), "-6.28");
@@ -71,7 +72,15 @@ fn binary_ops_hand_values() {
 
 #[test]
 fn unary_ops_distinguish_operations() {
-    for (c, e) in [(-75, -1), (75, -1), (-3, 0), (12345, -2), (-1, -5), (0, 0), (9, 3)] {
+    for (c, e) in [
+        (-75, -1),
+        (75, -1),
+        (-3, 0),
+        (12345, -2),
+        (-1, -5),
+        (0, 0),
+        (9, 3),
+    ] {
         run(check_unary(&Dec::new(c, e)));
     }
 }
@@ -84,8 +93,14 @@ fn arithmetic_reverts() {
     let one = Dec::new(1, 0);
     let ten = Dec::new(10, 0);
     let tenth = Dec::new(1, -1);
-    let (fmax, fmin_pos, fzero, fone, ften, ftenth) =
-        (float(&max), float(&min_pos), float(&zero), float(&one), float(&ten), float(&tenth));
+    let (fmax, fmin_pos, fzero, fone, ften, ftenth) = (
+        float(&max),
+        float(&min_pos),
+        float(&zero),
+        float(&one),
+        float(&ten),
+        float(&tenth),
+    );
     let revert = |got, want: RefError| run(check_float("revert", got, Err(want)));
     revert(fmax + fmax, RefError::ExponentOverflow);
     revert(fmax * ften, RefError::ExponentOverflow);
@@ -93,5 +108,10 @@ fn arithmetic_reverts() {
     revert(fmin_pos / ften, RefError::ExponentUnderflow);
     revert(fone / fzero, RefError::DivisionByZero);
     revert(fzero.inv(), RefError::DivisionByZero);
-    revert(fmin_pos.inv(), RefError::ExponentOverflow);
+    run(check_float(
+        "inv(min_positive)",
+        fmin_pos.inv(),
+        r::inv(&min_pos),
+    ));
+    assert!(r::dec(fmin_pos.inv().unwrap()).eq_value(&Dec::new(r::pow10(67), 2147483581)));
 }

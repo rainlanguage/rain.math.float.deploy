@@ -214,7 +214,10 @@ mod tests {
                 FloatError::DecimalFloat(decoded) => {
                     assert_eq!(decoded.selector().as_slice(), &output[..4], "{signature}");
                     let debug = format!("{decoded:?}");
-                    assert!(debug.starts_with(&format!("{}(", error.name)), "{signature}: {debug}");
+                    assert!(
+                        debug.starts_with(&format!("{}(", error.name)),
+                        "{signature}: {debug}"
+                    );
                     assert_eq!(decoded.abi_encode(), output, "{signature}");
                 }
                 other => panic!("{signature}: {other:?}"),
@@ -224,7 +227,8 @@ mod tests {
 
     #[test]
     fn unknown_revert_keeps_its_output() {
-        let string_error = alloy::sol_types::Revert::from("boom").abi_encode();
+        let string_error =
+            alloy::sol_types::SolError::abi_encode(&alloy::sol_types::Revert::from("boom"));
         let cases = [
             Bytes::new(),
             Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),

@@ -26,7 +26,12 @@ fn check_from(value: U256, decimals: u8) -> Result<(), TestCaseError> {
     )?;
     let (got, got_lossless) = Float::from_fixed_decimal_lossy(value, decimals).unwrap();
     let (want, want_lossless) = r::from_fixed_decimal_lossy(value, decimals);
-    prop_assert!(dec(got).eq_value(&want), "{case} lossy: crate {}, reference {}", show(&dec(got)), show(&want));
+    prop_assert!(
+        dec(got).eq_value(&want),
+        "{case} lossy: crate {}, reference {}",
+        show(&dec(got)),
+        show(&want)
+    );
     prop_assert_eq!(got_lossless, want_lossless, "{} lossless", case);
     Ok(())
 }
@@ -34,8 +39,16 @@ fn check_from(value: U256, decimals: u8) -> Result<(), TestCaseError> {
 fn check_to(a: &Dec, decimals: u8) -> Result<(), TestCaseError> {
     let f = float(a);
     let case = format!("to_fixed_decimal({}, {decimals})", show(a));
-    check(&case, f.to_fixed_decimal(decimals), r::to_fixed_decimal_lossless(a, decimals))?;
-    check(&format!("{case} lossy"), f.to_fixed_decimal_lossy(decimals), r::to_fixed_decimal_lossy(a, decimals))
+    check(
+        &case,
+        f.to_fixed_decimal(decimals),
+        r::to_fixed_decimal_lossless(a, decimals),
+    )?;
+    check(
+        &format!("{case} lossy"),
+        f.to_fixed_decimal_lossy(decimals),
+        r::to_fixed_decimal_lossy(a, decimals),
+    )
 }
 
 proptest! {
@@ -47,7 +60,7 @@ proptest! {
     }
 
     #[test]
-    fn to_fixed_decimal_matches_reference(a in r::float(), decimals in any::<u8>()) {
+    fn to_fixed_decimal_matches_reference(a in r::arb_float(), decimals in any::<u8>()) {
         check_to(&a, decimals)?;
     }
 
@@ -81,13 +94,28 @@ fn fixed_decimal_hand_values() {
 
 #[test]
 fn fixed_decimal_reverts() {
-    let revert = |got: Result<U256, _>, want: RefError| run(check(&format!("{want:?}"), got, Err(want)));
-    revert(float(&Dec::new(-1, 0)).to_fixed_decimal(0), RefError::NegativeFixedDecimalConversion);
-    revert(float(&Dec::new(1, -1)).to_fixed_decimal(0), RefError::LossyConversionFromFloat);
-    revert(float(&Dec::new(1, 78)).to_fixed_decimal(0), RefError::FixedDecimalOverflow);
-    revert(float(&Dec::new(1, 0)).to_fixed_decimal(78), RefError::FixedDecimalOverflow);
+    let revert =
+        |got: Result<U256, _>, want: RefError| run(check(&format!("{want:?}"), got, Err(want)));
+    revert(
+        float(&Dec::new(-1, 0)).to_fixed_decimal(0),
+        RefError::NegativeFixedDecimalConversion,
+    );
+    revert(
+        float(&Dec::new(1, -1)).to_fixed_decimal(0),
+        RefError::LossyConversionFromFloat,
+    );
+    revert(
+        float(&Dec::new(1, 78)).to_fixed_decimal(0),
+        RefError::FixedDecimalOverflow,
+    );
+    revert(
+        float(&Dec::new(1, 0)).to_fixed_decimal(78),
+        RefError::FixedDecimalOverflow,
+    );
     assert!(r::is_revert(
-        &float(&Dec::new(-1, 0)).to_fixed_decimal_lossy(0).unwrap_err(),
+        &float(&Dec::new(-1, 0))
+            .to_fixed_decimal_lossy(0)
+            .unwrap_err(),
         RefError::NegativeFixedDecimalConversion
     ));
     run(check_float(
