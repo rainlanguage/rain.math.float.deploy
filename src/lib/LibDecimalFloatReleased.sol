@@ -70,6 +70,14 @@ import {
     DEPENDENCIES as DecimalFloat_0_1_8_DEPENDENCIES
 } from "../generated/0_1_8/DecimalFloat.sol";
 
+import {
+    DEPLOYED_ADDRESS as DecimalFloat_0_1_9_DEPLOYED_ADDRESS,
+    BYTECODE_HASH as DecimalFloat_0_1_9_BYTECODE_HASH,
+    CREATION_CODE as DecimalFloat_0_1_9_CREATION_CODE,
+    RUNTIME_CODE as DecimalFloat_0_1_9_RUNTIME_CODE,
+    DEPENDENCIES as DecimalFloat_0_1_9_DEPENDENCIES
+} from "../generated/0_1_9/DecimalFloat.sol";
+
 /// @title LibDecimalFloatReleased
 /// @notice Every frozen release of `DecimalFloat`: one entry per file in
 /// the append-only `src/generated/<tag>/` record, in tag order.
@@ -90,7 +98,7 @@ library LibDecimalFloatReleased {
     /// Every frozen release, in tag order.
     /// @return The released suites.
     function releasedSuites() internal pure returns (DeploySuite[] memory) {
-        DeploySuite[] memory suites = new DeploySuite[](8);
+        DeploySuite[] memory suites = new DeploySuite[](9);
         suites[0] = DeploySuite({
             suite: "decimal-float@0_1_1",
             creationCode: DecimalFloat_0_1_1_CREATION_CODE,
@@ -176,6 +184,17 @@ library LibDecimalFloatReleased {
             storedRuntimeCode: DecimalFloat_0_1_8_RUNTIME_CODE,
             artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
             dependencies: abi.decode(DecimalFloat_0_1_8_DEPENDENCIES, (DeployDependency[])),
+            mechanism: DeployMechanism.Zoltu,
+            mechanismData: ""
+        });
+        suites[8] = DeploySuite({
+            suite: "decimal-float@0_1_9",
+            creationCode: DecimalFloat_0_1_9_CREATION_CODE,
+            storedDeployedAddress: DecimalFloat_0_1_9_DEPLOYED_ADDRESS,
+            storedBytecodeHash: DecimalFloat_0_1_9_BYTECODE_HASH,
+            storedRuntimeCode: DecimalFloat_0_1_9_RUNTIME_CODE,
+            artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
+            dependencies: abi.decode(DecimalFloat_0_1_9_DEPENDENCIES, (DeployDependency[])),
             mechanism: DeployMechanism.Zoltu,
             mechanismData: ""
         });
