@@ -1,5 +1,6 @@
 use alloy::hex::FromHex;
-use alloy::primitives::{Bytes, B256};
+use alloy::primitives::Bytes;
+pub use alloy::primitives::B256;
 use alloy::{sol, sol_types::SolCall};
 use revm::primitives::{fixed_bytes, U256};
 use serde::{Deserialize, Serialize};

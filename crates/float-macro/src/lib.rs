@@ -6,7 +6,7 @@
 //! Proc macro for compile-time `Float` literal parsing.
 //!
 //! Evaluates `Float::parse` at compile time via revm when given a numeric
-//! literal, emitting a const `Float::from_raw(FixedBytes([...]))` expression.
+//! literal, emitting a const `Float::from_raw(B256::new([...]))` expression.
 //! Invalid literals become compile errors instead of runtime panics.
 //!
 //! For runtime expressions (variables, method calls), falls back to
@@ -16,19 +16,24 @@ use proc_macro::{TokenStream, TokenTree};
 use rain_math_float::Float;
 
 /// Returns true if the string looks like a numeric literal
-/// (optional `-`, then digits, optional `.` and more digits).
+/// (optional `-`, then digits, optional `.` and more digits, optional
+/// `e`/`E` exponent with optional sign and at least one digit).
 fn is_numeric_literal_str(input: &str) -> bool {
     let trimmed = input.trim();
 
-    // Must match: optional minus, digits, optional decimal point + digits
     let s = trimmed.strip_prefix('-').unwrap_or(trimmed);
 
-    if s.is_empty() {
+    let (mantissa, exponent) = match s.find(['e', 'E']) {
+        Some(index) => (&s[..index], Some(&s[index + 1..])),
+        None => (s, None),
+    };
+
+    if mantissa.is_empty() {
         return false;
     }
 
     let mut seen_dot = false;
-    for ch in s.chars() {
+    for ch in mantissa.chars() {
         if ch == '.' {
             if seen_dot {
                 return false;
@@ -39,7 +44,13 @@ fn is_numeric_literal_str(input: &str) -> bool {
         }
     }
 
-    true
+    match exponent {
+        None => true,
+        Some(exponent) => {
+            let digits = exponent.strip_prefix(['+', '-']).unwrap_or(exponent);
+            !digits.is_empty() && digits.chars().all(|ch| ch.is_ascii_digit())
+        }
+    }
 }
 
 /// Parses a numeric literal into a `Float` at compile time.
@@ -159,7 +170,7 @@ fn compile_time_float_source(
     let bytes_list = byte_tokens.join(", ");
 
     Ok(format!(
-        "::rain_math_float::Float::from_raw(::alloy_primitives::FixedBytes([{bytes_list}]))"
+        "::rain_math_float::Float::from_raw(::rain_math_float::B256::new([{bytes_list}]))"
     ))
 }
 
@@ -232,15 +243,36 @@ mod tests {
     }
 
     #[test]
-    fn underscores_and_scientific_notation_rejected() {
+    fn underscores_and_hex_rejected() {
         // Rust numeric separators are not accepted
         assert!(!is_numeric_literal_str("1_000"));
 
-        // Scientific notation is not accepted
-        assert!(!is_numeric_literal_str("1e5"));
-        assert!(!is_numeric_literal_str("1.5e10"));
-
         // Hex is not accepted
         assert!(!is_numeric_literal_str("0xff"));
+        assert!(!is_numeric_literal_str("0xfe"));
+    }
+
+    #[test]
+    fn scientific_notation_is_numeric() {
+        assert!(is_numeric_literal_str("1e5"));
+        assert!(is_numeric_literal_str("1E5"));
+        assert!(is_numeric_literal_str("1.5e10"));
+        assert!(is_numeric_literal_str("1.5e-10"));
+        assert!(is_numeric_literal_str("1.5e+10"));
+        assert!(is_numeric_literal_str("-2.5e3"));
+    }
+
+    #[test]
+    fn malformed_exponents_rejected() {
+        assert!(!is_numeric_literal_str("e5"));
+        assert!(!is_numeric_literal_str("-e5"));
+        assert!(!is_numeric_literal_str("1e"));
+        assert!(!is_numeric_literal_str("1e-"));
+        assert!(!is_numeric_literal_str("1e+"));
+        assert!(!is_numeric_literal_str("1e5e5"));
+        assert!(!is_numeric_literal_str("1e5.5"));
+        assert!(!is_numeric_literal_str("1e--5"));
+        assert!(!is_numeric_literal_str("1.2.3e5"));
+        assert!(!is_numeric_literal_str("1e5f64"));
     }
 }

@@ -2233,7 +2233,6 @@ dependencies = [
 name = "rain-math-float-macro"
 version = "0.1.0"
 dependencies = [
- "alloy-primitives",
  "rain-math-float",
  "trybuild",
 ]

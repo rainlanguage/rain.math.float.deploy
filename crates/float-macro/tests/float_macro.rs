@@ -6,7 +6,7 @@
 #![allow(clippy::unwrap_used)]
 
 use rain_math_float::Float;
-use rain_math_float_macro::float;
+use rain_math_float_macro::{float, float_result};
 
 #[test]
 fn integer_literals() {
@@ -84,6 +84,43 @@ fn arithmetic() {
 
     let quotient = (float!(10) / float!(4)).unwrap();
     assert!(quotient.eq(float!(2.5)).unwrap());
+}
+
+#[test]
+fn scientific_literals_keep_full_precision() {
+    let cases = [
+        (float!(1.234567890123456789e2), "123.4567890123456789"),
+        (float!(1.234567890123456789E2), "123.4567890123456789"),
+        (float!(1.234567890123456789e+2), "123.4567890123456789"),
+        (float!(1.234567890123456789e-2), "0.01234567890123456789"),
+        (float!(-1.234567890123456789e2), "-123.4567890123456789"),
+        (float!(1e5), "100000"),
+    ];
+    for (from_macro, expected) in cases {
+        assert!(
+            from_macro
+                .eq(Float::parse(expected.to_string()).unwrap())
+                .unwrap(),
+            "{expected}"
+        );
+    }
+
+    let from_result_macro = float_result!(1.234567890123456789e2).unwrap();
+    assert!(
+        from_result_macro
+            .eq(Float::parse("123.4567890123456789".to_string()).unwrap())
+            .unwrap()
+    );
+}
+
+#[test]
+fn literal_is_const() {
+    const ONE_AND_A_HALF: Float = float!(1.5);
+    assert!(
+        ONE_AND_A_HALF
+            .eq(Float::parse("1.5".to_string()).unwrap())
+            .unwrap()
+    );
 }
 
 #[test]

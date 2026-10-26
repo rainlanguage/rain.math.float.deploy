@@ -249,6 +249,25 @@ mod tests {
     }
 
     #[test]
+    fn deserialize_json_number_keeps_full_precision() {
+        for number in [
+            "0.1234567890123456789",
+            "123456789012345678901234567890",
+            "-98765432109876543.21",
+            "1.234567890123456789e-30",
+        ] {
+            let expected = Float::parse(number.to_string()).unwrap();
+            let json = format!(r#"{{"value": {number}}}"#);
+
+            let payload: DeserializeFloat = serde_json::from_str(&json).unwrap();
+            assert!(payload.value.eq(expected).unwrap(), "{number}");
+
+            let payload: DeserializeOptionalFloat = serde_json::from_str(&json).unwrap();
+            assert!(payload.value.unwrap().eq(expected).unwrap(), "{number}");
+        }
+    }
+
+    #[test]
     fn deserialize_optional_float_supports_none() {
         let payload: DeserializeOptionalFloat = serde_json::from_value(json!({})).unwrap();
         assert!(payload.value.is_none());
