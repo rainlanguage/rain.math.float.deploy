@@ -111,6 +111,19 @@ describe("Test Float Bindings", () => {
       expect(p("3.14").toBigint()).toBe(BigInt(hex("fffffffe", "13a")));
     });
 
+    it("bigint conversions accept odd-length hex", () => {
+      const cases: [bigint, string][] = [
+        [0x1n, `0x${"0".repeat(63)}1`],
+        [0xabcn, `0x${"0".repeat(61)}abc`],
+        [2n ** 248n, `0x01${"0".repeat(62)}`],
+        [2n ** 252n - 1n, `0x0${"f".repeat(63)}`],
+      ];
+      for (const [value, expected] of cases) {
+        expect(Float.fromBigint(value).asHex()).toBe(expected);
+        expect(ok<any>(Float.tryFromBigint(value)).asHex()).toBe(expected);
+      }
+    });
+
     it("constants are the documented extremes", () => {
       expect(ok<any>(Float.maxPositiveValue()).asHex()).toBe(
         `0x7fffffff7${"f".repeat(55)}`,
