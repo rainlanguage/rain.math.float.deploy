@@ -2215,7 +2215,7 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
 name = "rain-math-float"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "alloy",
  "anyhow",
@@ -2233,7 +2233,7 @@ dependencies = [
 
 [[package]]
 name = "rain-math-float-macro"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rain-math-float",
  "trybuild",
@@ -2241,7 +2241,7 @@ dependencies = [
 
 [[package]]
 name = "rain-math-float-serde"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy",
  "rain-math-float",
