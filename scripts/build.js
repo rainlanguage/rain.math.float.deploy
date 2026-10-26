@@ -46,19 +46,24 @@ dts = "/* this file is auto-generated, do not modify */\n" + dts;
 fs.writeFileSync(`./dist/cjs/index.d.ts`, dts);
 fs.writeFileSync(`./dist/esm/index.d.ts`, dts);
 
+function replaceOnce(source, from, to) {
+  if (!source.includes(from)) {
+    throw new Error(`wasm-bindgen output changed, missing:\n${from}`);
+  }
+  return source.replace(from, to);
+}
+
 // prepare cjs
 let cjs = fs.readFileSync(`./temp/node/float.js`, {
   encoding: "utf-8",
 });
-cjs = cjs.replace(
-  `const path = require('path').join(__dirname, 'float_bg.wasm');
-const bytes = require('fs').readFileSync(path);`,
-  `
-const { Buffer } = require('buffer');
+cjs = replaceOnce(
+  cjs,
+  "const wasmPath = `${__dirname}/float_bg.wasm`;\nconst wasmBytes = require('fs').readFileSync(wasmPath);",
+  `const { Buffer } = require('buffer');
 const wasmB64 = require('./float_wbg.json');
-const bytes = Buffer.from(wasmB64.wasm, 'base64');`,
+const wasmBytes = Buffer.from(wasmB64.wasm, 'base64');`,
 );
-cjs = cjs.replace("const { TextEncoder, TextDecoder } = require(`util`);", "");
 cjs = "/* this file is auto-generated, do not modify */\n" + cjs;
 fs.writeFileSync(`./dist/cjs/index.js`, cjs);
 
@@ -66,13 +71,13 @@ fs.writeFileSync(`./dist/cjs/index.js`, cjs);
 let esm = fs.readFileSync(`./temp/web/float.js`, {
   encoding: "utf-8",
 });
-esm = esm.replace(
-  `export { initSync };
-export default __wbg_init;`,
+esm = replaceOnce(
+  esm,
+  `export { initSync, __wbg_init as default };`,
   `import { Buffer } from 'buffer';
 import wasmB64 from './float_wbg.json';
-const bytes = Buffer.from(wasmB64.wasm, 'base64');
-initSync(bytes);`,
+initSync({ module: Buffer.from(wasmB64.wasm, 'base64') });
+export { initSync, __wbg_init as default };`,
 );
 esm = "/* this file is auto-generated, do not modify */\n" + esm;
 fs.writeFileSync(`./dist/esm/index.js`, esm);
