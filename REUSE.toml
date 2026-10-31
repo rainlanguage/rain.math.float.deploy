@@ -2,7 +2,6 @@ version = 1
 
 [[annotations]]
 path = [
-  ".coderabbitai.yaml",
   ".github/workflows/**/",
   ".gitignore",
   ".prettierignore",
