@@ -5,7 +5,6 @@ pragma solidity ^0.8.25;
 import {
     DeployCandidate,
     DeployDependency,
-    DeployMechanism,
     DeploySuite,
     RainDeploySuitesBase
 } from "./RainDeploySuitesBase.sol";
@@ -13,6 +12,7 @@ import {
     CREATION_CODE as DECIMAL_FLOAT_CREATION_CODE_CANDIDATE,
     RUNTIME_CODE as DECIMAL_FLOAT_RUNTIME_CODE_CANDIDATE
 } from "../generated/candidate/DecimalFloat.sol";
+import {LibRainDeployZoltuMechanism} from "rain-deploy-0.1.32/src/lib/LibRainDeployZoltuMechanism.sol";
 import {LibDecimalFloatDeploy} from "../lib/deploy/LibDecimalFloatDeploy.sol";
 import {LibReleasedSuites} from "../lib/LibReleasedSuites.sol";
 
@@ -62,8 +62,9 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
                 storedRuntimeCode: DECIMAL_FLOAT_RUNTIME_CODE_CANDIDATE,
                 artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
                 dependencies: new DeployDependency[](0),
-                mechanism: DeployMechanism.Zoltu,
-                mechanismData: ""
+                mechanismData: LibRainDeployZoltuMechanism.mechanismData(),
+                networks: new string[](0),
+                describedByMeta: ""
             }),
             unanchorableReason: ""
         });
@@ -86,8 +87,9 @@ abstract contract DecimalFloatDeploySuites is RainDeploySuitesBase {
             storedRuntimeCode: "",
             artifactPath: "src/generated/LogTables.bytes.sol:LogTables",
             dependencies: new DeployDependency[](0),
-            mechanism: DeployMechanism.Zoltu,
-            mechanismData: ""
+            mechanismData: LibRainDeployZoltuMechanism.mechanismData(),
+            networks: new string[](0),
+            describedByMeta: ""
         });
     }
 }
