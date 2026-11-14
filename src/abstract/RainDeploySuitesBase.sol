@@ -10,6 +10,7 @@ pragma solidity ^0.8.25;
 // spelling of the package path.
 import {
     DeployCandidate,
+    DeployDeclaration,
     DeployDependency,
     DeploySuite,
     RainDeploySuitesBase
