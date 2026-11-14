@@ -21,10 +21,10 @@ integrity = "31709632844197e8ecc7d69c8e61a3ac94e9efc184aa6a3466a7d932e4d6aa54"
 
 [[dependencies]]
 name = "rain-factory"
-version = "0.2.11"
-url = "https://soldeer-revisions.s3.amazonaws.com/rain-factory/0_2_11_09-11-2026_13:43:34_rain.zip"
-checksum = "45429f1918d162e71e1e1445d78dadf772f9b2bdd78c5eac2c8a7789ff3abd28"
-integrity = "a560ec0f8dc2d81796c07f046e8126adffaf9fdce1b280cc92ea93eecc706949"
+version = "0.2.12"
+url = "https://soldeer-revisions.s3.amazonaws.com/rain-factory/0_2_12_14-11-2026_22:54:16_rain.zip"
+checksum = "8088e5e36192f4d45e4ee6e51bbcdd6047f6889b5d338adb668b576bd6333e20"
+integrity = "48574816e7017703e824f1bb5f3bddd9a2cc2b7cf960598d12dcb7494e56ac42"
 
 [[dependencies]]
 name = "rain-math-float"
