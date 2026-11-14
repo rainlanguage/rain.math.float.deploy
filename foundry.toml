@@ -82,6 +82,7 @@ forge-std = "1.17.0"
 "rain-sol-codegen" = "0.1.39"
 "rain-math-float" = "0.3.11"
 "rain-factory" = "0.2.12"
+"rain-metadata" = "0.1.46"
 "@openzeppelin-contracts" = "5.7.0"
 
 [soldeer]
