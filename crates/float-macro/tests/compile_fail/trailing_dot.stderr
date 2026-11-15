@@ -1,4 +1,4 @@
-error: float!(5.) failed: Decimal Float error selector: Err(0x7bfa48af)
+error: float!(5.) failed: Decimal Float error selector: Ok(MalformedDecimalPoint)
  --> tests/compile_fail/trailing_dot.rs:5:13
   |
 5 |     let _ = float!(5.);

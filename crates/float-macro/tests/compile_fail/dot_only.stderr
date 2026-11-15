@@ -1,4 +1,4 @@
-error: float!(.) failed: Decimal Float error selector: Err(0x34bd2069)
+error: float!(.) failed: Decimal Float error selector: Ok(ParseEmptyDecimalString)
  --> tests/compile_fail/dot_only.rs:5:13
   |
 5 |     let _ = float!(.);
