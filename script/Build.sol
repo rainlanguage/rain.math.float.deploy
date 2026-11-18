@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {BuildScript, GeneratedContract, RetiredContract} from "rain-deploy-0.1.34/src/abstract/BuildScript.sol";
-import {LibRainDeploySnapshot} from "rain-deploy-0.1.34/src/lib/LibRainDeploySnapshot.sol";
+import {BuildScript, GeneratedContract, RetiredContract} from "rain-deploy-0.1.35/src/abstract/BuildScript.sol";
+import {LibRainDeploySnapshot} from "rain-deploy-0.1.35/src/lib/LibRainDeploySnapshot.sol";
 import {DeployDeclaration} from "../src/abstract/RainDeploySuitesBase.sol";
 import {DecimalFloatDeploySuites} from "../src/abstract/DecimalFloatDeploySuites.sol";
 
