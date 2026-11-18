@@ -87,6 +87,14 @@ import {
     DEPENDENCIES as DecimalFloat_0_1_10_DEPENDENCIES
 } from "../generated/0_1_10/DecimalFloat.sol";
 
+import {
+    DEPLOYED_ADDRESS as DecimalFloat_0_1_11_DEPLOYED_ADDRESS,
+    BYTECODE_HASH as DecimalFloat_0_1_11_BYTECODE_HASH,
+    CREATION_CODE as DecimalFloat_0_1_11_CREATION_CODE,
+    RUNTIME_CODE as DecimalFloat_0_1_11_RUNTIME_CODE,
+    DEPENDENCIES as DecimalFloat_0_1_11_DEPENDENCIES
+} from "../generated/0_1_11/DecimalFloat.sol";
+
 /// @title LibDecimalFloatReleased
 /// @notice Every frozen release of `DecimalFloat`: one entry per file in
 /// the append-only `src/generated/<tag>/` record, in tag order.
@@ -107,7 +115,7 @@ library LibDecimalFloatReleased {
     /// Every frozen release, in tag order.
     /// @return The released suites.
     function releasedSuites() internal pure returns (DeploySuite[] memory) {
-        DeploySuite[] memory suites = new DeploySuite[](10);
+        DeploySuite[] memory suites = new DeploySuite[](11);
         suites[0] = DeploySuite({
             suite: "decimal-float@0_1_1",
             creationCode: DecimalFloat_0_1_1_CREATION_CODE,
@@ -224,6 +232,18 @@ library LibDecimalFloatReleased {
             storedRuntimeCode: DecimalFloat_0_1_10_RUNTIME_CODE,
             artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
             dependencies: abi.decode(DecimalFloat_0_1_10_DEPENDENCIES, (DeployDependency[])),
+            mechanismData: LibRainDeployZoltuMechanism.mechanismData(),
+            networks: new string[](0),
+            describedByMeta: ""
+        });
+        suites[10] = DeploySuite({
+            suite: "decimal-float@0_1_11",
+            creationCode: DecimalFloat_0_1_11_CREATION_CODE,
+            storedDeployedAddress: DecimalFloat_0_1_11_DEPLOYED_ADDRESS,
+            storedBytecodeHash: DecimalFloat_0_1_11_BYTECODE_HASH,
+            storedRuntimeCode: DecimalFloat_0_1_11_RUNTIME_CODE,
+            artifactPath: "src/concrete/DecimalFloat.sol:DecimalFloat",
+            dependencies: abi.decode(DecimalFloat_0_1_11_DEPENDENCIES, (DeployDependency[])),
             mechanismData: LibRainDeployZoltuMechanism.mechanismData(),
             networks: new string[](0),
             describedByMeta: ""
