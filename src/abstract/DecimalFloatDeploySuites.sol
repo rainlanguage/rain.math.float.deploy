@@ -13,8 +13,8 @@ import {
     CREATION_CODE as DECIMAL_FLOAT_CREATION_CODE_CANDIDATE,
     RUNTIME_CODE as DECIMAL_FLOAT_RUNTIME_CODE_CANDIDATE
 } from "../generated/candidate/DecimalFloat.sol";
-import {LibRainDeployDeclaration} from "rain-deploy-0.1.34/src/lib/LibRainDeployDeclaration.sol";
-import {LibRainDeployZoltuMechanism} from "rain-deploy-0.1.34/src/lib/LibRainDeployZoltuMechanism.sol";
+import {LibRainDeployDeclaration} from "rain-deploy-0.1.35/src/lib/LibRainDeployDeclaration.sol";
+import {LibRainDeployZoltuMechanism} from "rain-deploy-0.1.35/src/lib/LibRainDeployZoltuMechanism.sol";
 import {LibDecimalFloatDeploy} from "../lib/deploy/LibDecimalFloatDeploy.sol";
 import {LibReleasedSuites} from "../lib/LibReleasedSuites.sol";
 
